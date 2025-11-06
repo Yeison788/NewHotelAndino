@@ -4,3 +4,10 @@ vendor/
 .env
 .idea/
 *.log
+# Ignorar carpetas y binarios generados por Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+*.zip
+*.exe
