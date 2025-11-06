@@ -339,15 +339,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="carousel-item active">
       <img class="carousel-image" src="./image/hotel1.jpg" alt="Hotel Andino 1">
     </div>
-    <div class="carousel-item">
-      <img class="carousel-image" src="./image/hotel2.jpg" alt="Hotel Andino 2">
-    </div>
-    <div class="carousel-item">
-      <img class="carousel-image" src="./image/hotel3.jpg" alt="Hotel Andino 3">
-    </div>
-    <div class="carousel-item">
-      <img class="carousel-image" src="./image/hotel4.jpg" alt="Hotel Andino 4">
-    </div>
   </div>
 </section>
 
