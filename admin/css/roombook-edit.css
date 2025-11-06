@@ -1,0 +1,77 @@
+.roombook-edit .section-card {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 16px;
+  padding: 1.5rem;
+  background: linear-gradient(180deg, #fff, #f8fafc);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.06);
+}
+
+.roombook-edit .section-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #1e293b;
+}
+
+.roombook-edit .section-title i {
+  color: #1d4ed8;
+}
+
+.roombook-edit .form-label {
+  font-weight: 500;
+  color: #475569;
+}
+
+.roombook-edit .form-control,
+.roombook-edit .form-select {
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  padding: 0.65rem 0.9rem;
+  box-shadow: none;
+}
+
+.roombook-edit .form-control:focus,
+.roombook-edit .form-select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.15);
+}
+
+.roombook-edit .summary-card {
+  padding: 1rem 1.25rem;
+  border-radius: 14px;
+  border: 1px solid rgba(37, 99, 235, 0.12);
+  background: rgba(37, 99, 235, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  height: 100%;
+}
+
+.roombook-edit .summary-label {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #334155;
+}
+
+.roombook-edit .summary-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.roombook-edit .card-footer .btn {
+  min-width: 180px;
+}
+
+@media (max-width: 768px) {
+  .roombook-edit .section-card {
+    padding: 1.25rem;
+  }
+  .roombook-edit .card-footer .btn {
+    width: 100%;
+  }
+}

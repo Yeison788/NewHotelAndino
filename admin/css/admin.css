@@ -1,0 +1,396 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600&display=swap');
+
+/* =========================================================
+   Variables de tema (paleta dorada) y tokens de diseño
+   ========================================================= */
+:root{
+  /* Colores de marca */
+  --gold:        #d4af37;
+  --gold-light:  #e4c766;
+  --gold-dark:   #b8860b;
+
+  /* Superficies y texto */
+  --surface:     #fffdf6;
+  --text:        #2b2b2b;
+
+  /* Sidebar */
+  --sidebar-bg:       #1f1f1f;
+  --sidebar-text:     #ffffff;
+  --sidebar-hover:    rgba(212,175,55,.18);
+  --sidebar-active:   rgba(212,175,55,.35);
+  --sidebar-accent:   var(--gold);
+
+  /* Sombras y resaltados */
+  --shadow-1:   0 2px 8px rgba(0,0,0,.10);
+  --shadow-2:   0 4px 12px rgba(0,0,0,.14);
+  --ring:       0 0 0 .18rem rgba(212,175,55,.35);
+
+  /* Dimensiones del layout */
+  --topbar-h:   44px;
+  --sidenav-w:  18%;
+}
+
+/* =========================================================
+   Reset básico y tipografía
+   ========================================================= */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+}
+
+body{
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  color: var(--text);
+  background: var(--surface);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Mejor accesibilidad: focus visible */
+:focus-visible{
+  outline: none;
+  box-shadow: var(--ring);
+  border-radius: 10px;
+}
+
+/* =========================================================
+   Barra superior (Topbar)
+   ========================================================= */
+.uppernav{
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1000;
+  height: var(--topbar-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 32px;
+  background-image: linear-gradient(90deg, var(--gold-light), var(--gold-dark));
+  box-shadow: var(--shadow-1);
+}
+
+.logo{
+  height: calc(var(--topbar-h) - 8px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo .HotelAndino{
+  height: 100%;
+  width: auto;
+  display: block;
+}
+
+.logo p{
+  margin: 0;
+  font-size: 26px;
+  color: var(--gold-dark);
+  text-shadow: 0 2px 4px rgba(13,0,77,.08), 0 3px 6px rgba(13,0,77,.08), 0 8px 16px rgba(13,0,77,.08);
+}
+
+/* Perfil superior */
+.profile-menu{
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.profile-trigger{
+  border: none;
+  background: rgba(255,255,255,.18);
+  border-radius: 999px;
+  padding: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .2s ease, background .2s ease;
+}
+
+.profile-trigger:hover{
+  background: rgba(255,255,255,.28);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0,0,0,.12);
+}
+
+.profile-menu .profile-avatar{
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255,255,255,.6);
+  background: rgba(255,255,255,.4);
+}
+
+.profile-dropdown{
+  position: absolute;
+  top: calc(100% + 14px);
+  right: 0;
+  width: min(320px, 90vw);
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: var(--shadow-2);
+  padding: 16px;
+  opacity: 0;
+  transform: translateY(-8px);
+  pointer-events: none;
+  transition: opacity .18s ease, transform .18s ease;
+}
+
+.profile-dropdown::before{
+  content: '';
+  position: absolute;
+  top: -8px;
+  right: 22px;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  transform: rotate(45deg);
+  box-shadow: -2px -2px 6px rgba(0,0,0,.05);
+}
+
+.profile-menu.is-open .profile-dropdown{
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.profile-summary{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(0,0,0,.08);
+}
+
+.profile-summary .profile-avatar{
+  width: 56px;
+  height: 56px;
+  border: 2px solid rgba(212,175,55,.4);
+}
+
+.profile-text{
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.profile-name{
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--text);
+}
+
+.profile-role{
+  font-size: 13px;
+  color: var(--gold-dark);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.profile-email{
+  font-size: 13px;
+  color: #6c6c6c;
+}
+
+.profile-actions{
+  padding-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.profile-actions .dropdown-item{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: var(--text);
+  text-decoration: none;
+  transition: background-color .15s ease, color .15s ease;
+}
+
+.profile-actions .dropdown-item:hover{
+  background: rgba(212,175,55,.12);
+  color: var(--gold-dark);
+}
+
+.profile-actions .dropdown-divider{
+  height: 1px;
+  background: rgba(0,0,0,.08);
+  margin: 4px 0;
+}
+
+/* =========================================================
+   Sidebar (sidenav)
+   ========================================================= */
+.sidenav{
+  position: fixed;             /* Evita solaparse y sigue el scroll */
+  top: var(--topbar-h);
+  left: 0;
+  width: var(--sidenav-w);
+  height: calc(100vh - var(--topbar-h));
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text);
+  box-shadow: 4px 0 10px rgba(0,0,0,.20);
+  overflow-y: auto;
+}
+
+.sidenav ul{
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sidenav ul li{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 50px;
+  padding: 0 14px;
+  cursor: pointer;
+  font-weight: 500;
+  user-select: none;
+  transition: background-color .18s ease, color .18s ease;
+}
+
+.sidenav ul li:hover{
+  background: var(--sidebar-hover);
+}
+
+.sidenav ul li.active{
+  background: var(--sidebar-active);
+  border-left: 4px solid var(--sidebar-accent);
+  padding-left: 10px; /* compensa el borde izquierdo */
+}
+
+.sidenav ul li.has-submenu{
+  display: block;
+  padding: 0;
+  height: auto;
+}
+
+.sidenav ul li.has-submenu .submenu-trigger{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 50px;
+  padding: 0 14px;
+  cursor: pointer;
+  font-weight: 500;
+  user-select: none;
+  transition: background-color .18s ease, color .18s ease;
+}
+
+.sidenav ul li.has-submenu .submenu-trigger:hover,
+.sidenav ul li.has-submenu .submenu-trigger.active{
+  background: var(--sidebar-active);
+  border-left: 4px solid var(--sidebar-accent);
+  padding-left: 10px;
+}
+
+.sidenav ul li.has-submenu .submenu{
+  display: none;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.03);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.sidenav ul li.has-submenu:hover .submenu,
+.sidenav ul li.has-submenu:focus-within .submenu,
+.sidenav ul li.has-submenu .submenu-trigger.active + .submenu{
+  display: block;
+}
+
+.sidenav ul li.has-submenu .submenu .pagebtn{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 14px 0 48px;
+  font-size: 0.92rem;
+}
+
+.sidenav ul li.has-submenu .submenu .pagebtn.active{
+  background: var(--sidebar-active);
+  border-left: 4px solid var(--sidebar-accent);
+  padding-left: 44px;
+}
+
+.sidenav img{
+  height: 23px;
+  width: 23px;
+  display: block;
+}
+
+.sidenav ul li i{
+  font-size: 18px;
+  width: 23px;
+  text-align: center;
+}
+/* =========================================================
+   Área principal (iframes)
+   ========================================================= */
+.mainscreen{
+  /* deja espacio para la barra superior y el menú lateral */
+  margin-left: var(--sidenav-w);
+  margin-top: var(--topbar-h);  
+  height: calc(100vh - var(--topbar-h));
+  background: transparent;
+}
+
+.frames{
+  display: none;
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+}
+.frames.active{
+  display: block;
+}
+
+/* =========================================================
+   Vista móvil / bloqueo admin en mobile
+   ========================================================= */
+#mobileview{
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  background: #ffffff;
+}
+
+@media (max-width: 40rem){
+  #mobileview{ display: flex; }
+}
+
+/* =========================================================
+   (Opcional) Scrollbar sutil en admin
+   ========================================================= */
+.sidenav::-webkit-scrollbar{
+  width: .45rem;
+}
+.sidenav::-webkit-scrollbar-track{
+  background: #141414;
+}
+.sidenav::-webkit-scrollbar-thumb{
+  background: linear-gradient(180deg, var(--gold), var(--gold-dark));
+}
+
+/* =========================================================
+   Utilidades (por si las necesitas)
+   ========================================================= */
+.hidden{ display: none !important; }

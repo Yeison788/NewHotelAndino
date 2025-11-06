@@ -1,0 +1,98 @@
+@import url('https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Anton&family=Cookie&family=Poppins:wght@600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400&display=swap');
+
+:root {
+    --bg-text-shadow: 0 2px 4px rgb(13 0 77 / 8%), 
+                      0 3px 6px rgb(13 0 77 / 8%), 
+                      0 8px 16px rgb(13 0 77 / 8%);
+    --bg-box-shadow: 0px 4px 10px rgba(0,0,0,0.15);
+    --color-gold: #ffd700;
+    --color-darkgold: #b8860b;
+    --color-cream: #fff8dc;
+    --color-lightcream: #fff4cc;
+}
+
+/* Scrollbar */
+*::-webkit-scrollbar {
+    width: .4rem;
+}
+*::-webkit-scrollbar-track {
+    background: var(--color-darkgold);
+}
+*::-webkit-scrollbar-thumb {
+    background: var(--color-gold);
+}
+
+body {
+    background-color: var(--color-cream);
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding-top: 10px;
+}
+
+/* Databox */
+.databox {
+    width: 100%;
+    display: flex;
+    justify-content: space-evenly;
+    flex-wrap: wrap; /* responsive */
+    gap: 15px;
+}
+
+.databox .box {
+    flex: 1 1 300px;
+    max-width: 380px;
+    height: 200px;
+    margin: 20px 0;
+    background-color: var(--color-lightcream);
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    box-shadow: var(--bg-box-shadow);
+    padding: 20px;
+    text-align: center;
+}
+
+.databox .box h1 {
+    font-size: clamp(36px, 6vw, 64px);
+    font-family: 'Hind Siliguri', sans-serif;
+    color: var(--color-darkgold);
+    margin: 0;
+    word-break: break-word;
+}
+
+.box:nth-child(1),
+.box:nth-child(2),
+.box:nth-child(3) {
+    border-bottom: 8px solid var(--color-gold);
+}
+
+/* Charts */
+.chartbox {
+    width: 100%;
+    display: flex;
+    justify-content: space-evenly;
+    flex-wrap: wrap; /* responsive */
+    gap: 20px;
+}
+
+.profitchart,
+.bookroomchart {
+    background-color: var(--color-lightcream);
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: var(--bg-box-shadow);
+}
+
+.profitchart {
+    flex: 1 1 500px;
+    max-width: 660px;
+}
+
+.bookroomchart {
+    flex: 1 1 250px;
+    max-width: 330px;
+    padding: 10px 40px;
+}

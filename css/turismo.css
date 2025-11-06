@@ -1,0 +1,259 @@
+:root {
+  --gold:#d4af37;
+  --gold-dark:#b8860b;
+  --ink:#1f1f1f;
+  --panel:#fafafa;
+  --line:#e9e9ee;
+  --bg:#f5f6fa;
+}
+
+/* ===== Global ===== */
+body {
+  background: linear-gradient(180deg, #fafafa 0%, #f0f0f5 100%);
+  font-family: 'Segoe UI', Roboto, sans-serif;
+  color: var(--ink);
+  margin: 0;
+  padding-top: 70px; /* ✅ igual a la altura de la navbar */
+}
+
+/* ===== Navbar ===== */
+nav.navbar {
+  background: rgba(255,255,255,0.5) !important; /* sobreescribe Bootstrap */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+nav.navbar .hotel-title {
+  font-weight: 600;
+  color: var(--gold-dark);
+}
+.navbar .btn {
+  border-color: var(--gold-dark);
+  color: var(--gold-dark);
+  font-weight: 600;
+  transition: all .2s ease;
+}
+.navbar .btn:hover {
+  background: var(--gold-dark);
+  color: #fff;
+}
+
+/* ===== Toolbar (filtros) ===== */
+.toolbar {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.06);
+  margin-bottom: 12px !important; /* menos espacio */
+}
+.toolbar .row > div { margin-bottom: 0 !important; }
+
+/* Bajar columna de Calificación mínima */
+.filter-rating {
+  margin-top: 12px; /* ajusta según necesites */
+}
+
+/* ===== Botones ===== */
+.btn-dark {
+  background: var(--gold-dark);
+  border: none;
+  font-weight:600;
+  transition: all .2s ease;
+}
+.btn-dark:hover {
+  background: var(--gold);
+  transform: translateY(-1px);
+  box-shadow:0 6px 14px rgba(0,0,0,.15);
+}
+.btn-outline-dark {
+  border:2px solid var(--gold-dark);
+  color: var(--gold-dark);
+  font-weight:600;
+  transition: all .2s ease;
+}
+.btn-outline-dark:hover {
+  background: var(--gold-dark);
+  color:#fff;
+}
+
+/* ===== Layout principal ===== */
+.map-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 16px;
+  min-height: 72vh;
+  position: relative;
+}
+#map {
+  width: 100%;
+  min-height: 72vh;
+  border-radius: 14px;
+  border: 1px solid #e1e1e8;
+  box-shadow: 0 4px 10px rgba(0,0,0,.05);
+}
+
+/* ===== Panel de resultados ===== */
+#results-panel {
+  background:#fff;
+  border:1px solid #e1e1e8;
+  border-radius:14px;
+  box-shadow: 0 4px 10px rgba(0,0,0,.05);
+  display:flex;
+  flex-direction:column;
+  max-height: 72vh;
+}
+.results-header {
+  padding:10px 14px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-weight:600;
+  color: var(--gold-dark);
+}
+#results-list {
+  overflow:auto;
+  padding:8px 8px 4px;
+  flex:1 1 auto;
+}
+.result-item {
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px;
+  margin-bottom:8px;
+  cursor:pointer;
+  transition: transform .06s ease, box-shadow .15s ease, border-color .15s ease;
+  background:#fff;
+}
+.result-item:hover {
+  transform: translateY(-1px);
+  border-color: var(--gold);
+  box-shadow: 0 8px 18px rgba(0,0,0,.08);
+}
+.result-item.active {
+  border-color: var(--gold);
+  box-shadow: 0 8px 18px rgba(212,175,55,.25);
+}
+
+/* ===== Panel de detalles (drawer derecho) ===== */
+#place-details {
+  position: fixed;
+  top: 76px;
+  right: 16px;
+  width: 380px;
+  max-width: calc(100vw - 32px);
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:12px;
+  box-shadow: 0 10px 28px rgba(0,0,0,.18);
+  z-index: 1000;
+  transition: transform .18s ease, opacity .18s ease;
+}
+#place-details.hidden {
+  transform: translateX(420px);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Botón de cierre ❌ */
+#details-close {
+  position:absolute;
+  top:10px;
+  right:10px;
+  width:32px; height:32px;
+  border:2px solid var(--gold);
+  border-radius:50%;
+  background:#fff;
+  font-size:20px;
+  font-weight:700;
+  cursor:pointer;
+  color: var(--gold-dark);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition: all .2s ease;
+}
+#details-close:hover {
+  background: var(--gold-dark);
+  color:#fff;
+}
+.details-body { padding:14px; }
+.details-photo {
+  height:180px;
+  border-radius:10px;
+  background:#f3f3f6;
+  margin-bottom:10px;
+  background-size:cover;
+  background-position:center;
+}
+#details-name { margin: 2px 0 4px; font-weight: 600; }
+.details-rating { font-size:14px; margin-bottom:6px; color:#444; }
+.details-address, .details-hours, .details-phone {
+  font-size:14px; margin-bottom:6px; color:#333;
+}
+.details-links a {
+  display:inline-block;
+  margin-right:8px;
+  margin-top:6px;
+  font-size:13px;
+  text-decoration:none;
+  border:1px solid var(--line);
+  padding:6px 10px;
+  border-radius:999px;
+}
+.details-links a:hover {
+  border-color: var(--gold);
+  background: var(--gold);
+  color:#fff;
+}
+
+/* ===== Chips (categorías) ===== */
+.chips{ display:flex; flex-wrap:wrap; gap:10px; }
+.btn-check{ position:absolute; clip:rect(0,0,0,0); pointer-events:none; }
+.chip{
+  display:inline-block;
+  padding:8px 14px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  background:#fff;
+  font-size:14px;
+  cursor:pointer;
+  transition: all .15s ease;
+}
+.chip:hover{
+  transform: translateY(-1px);
+  box-shadow:0 8px 18px rgba(0,0,0,.08);
+}
+.btn-check:checked + .chip{
+  border-color: var(--gold);
+  background: rgba(212,175,55,.12);
+  box-shadow: 0 0 0 2px rgba(212,175,55,.18) inset;
+  font-weight:600;
+}
+.btn-check:focus + .chip{
+  outline:2px solid rgba(212,175,55,.5);
+  outline-offset:2px;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 992px){
+  .map-layout{ grid-template-columns: 1fr; }
+  #results-panel{ order: 2; max-height: 40vh; }
+  #map{ order: 1; min-height: 50vh; }
+  #place-details{ width: 100%; right: 0; top: auto; bottom: 0; }
+}
+/* Bordes redondeados consistentes para cards */
+.card.rounded-soft{
+  border-radius: 14px !important;
+  overflow: hidden;              /* evita esquinas internas cuadradas */
+}
+
+/* Mis preferencias: cajita de chips del editor */
+.prefs-wrap{
+  border-radius: 14px;           /* mismo radio que el card */
+}
+
+/* (Opcional) Igualar la toolbar al mismo radio */
+.toolbar{
+  border-radius: 14px;           /* antes tenías 12px */
+}

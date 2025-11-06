@@ -1,0 +1,48 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+body {
+  font-family: 'Poppins', sans-serif;
+}
+
+.status-card {
+  border-radius: 16px;
+  border-width: 2px !important;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 12px 24px rgba(15, 15, 15, 0.08);
+  height: 100%;
+}
+
+.status-header {
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.status-body {
+  padding: 18px 20px;
+}
+
+.status-item {
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.status-item:last-child {
+  border-bottom: none;
+}
+
+.status-item .fw-bold {
+  color: #1f1f1f;
+}
+
+.status-item .text-muted {
+  color: #6b7280 !important;
+}
+
+.badge.bg-secondary {
+  border-radius: 999px;
+  font-weight: 500;
+  padding: 10px 14px;
+}

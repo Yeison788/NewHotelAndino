@@ -1,0 +1,2076 @@
+ (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000000000000000000000000000000000000..26ee7fed1ef9124973422a95953167507e5442b2
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,6 @@
++node_modules/
++vendor/
++.DS_Store
++.env
++.idea/
++*.log
+diff --git a/admin/admin.php b/admin/admin.php
+index 65ec111b6101088b4cd80aadcbde157c7199d87c..16ce71bf2ca2f58a35e34bbe7ca8c26c5f09e083 100644
+--- a/admin/admin.php
++++ b/admin/admin.php
+@@ -1,55 +1,56 @@
+ <?php
+ include '../config.php';
+ session_start();
+ 
+ require_once __DIR__ . '/includes/admin_bootstrap.php';
+ 
+ // Verificación de sesión admin
+ $adminmail = $_SESSION['adminmail'] ?? '';
+ if (!$adminmail) {
+   header("location: ../index.php");
+   exit;
+ }
+ 
+ ensureEmpStructure($conn);
+ ensureRoomRates($conn);
+ admin_refresh_session($conn, $adminmail);
+ 
+ $employee = admin_current_employee();
+ $avatarPath = !empty($employee['avatar']) ? '../' . ltrim($employee['avatar'], '/') : '../image/Profile.png';
+ $hasRecords = admin_has_records_access();
+ $recordsDefaultView = admin_first_records_view();
+ 
+ $framesPermissions = [
+   0 => admin_user_can('dashboard'),
+   1 => admin_user_can('reservas'),
+-  2 => admin_user_can('pagos'),
+-  3 => admin_user_can('habitaciones'),
+-  4 => admin_user_can('personal'),
+-  5 => $hasRecords,
+-  6 => admin_user_can('estado_habitaciones'),
++  2 => admin_user_can('reservas'),
++  3 => admin_user_can('pagos'),
++  4 => admin_user_can('habitaciones'),
++  5 => admin_user_can('personal'),
++  6 => $hasRecords,
++  7 => admin_user_can('estado_habitaciones'),
+ ];
+ 
+ $initialFrame = 0;
+ foreach ($framesPermissions as $idx => $allowed) {
+   if ($allowed) {
+     $initialFrame = $idx;
+     break;
+   }
+ }
+ ?>
+ 
+ 
+ <!DOCTYPE html>
+ <html lang="es">
+ <head>
+     <meta charset="UTF-8">
+     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <title>Hotel Andino - Admin</title>
+ 
+     <!-- admin.css (ya con paleta dorada) -->
+     <link rel="stylesheet" href="./css/admin.css">
+ 
+     <!-- loading bar -->
+     <script src="https://cdn.jsdelivr.net/npm/pace-js@latest/pace.min.js"></script>
+@@ -82,83 +83,85 @@ foreach ($framesPermissions as $idx => $allowed) {
+                     <div class="profile-text">
+                         <div class="profile-name"><?php echo htmlspecialchars($employee['name'] ?: 'Administrador'); ?></div>
+                         <?php if (!empty($employee['role'])): ?>
+                             <div class="profile-role"><?php echo htmlspecialchars($employee['role']); ?></div>
+                         <?php endif; ?>
+                         <div class="profile-email"><?php echo htmlspecialchars($employee['email']); ?></div>
+                     </div>
+                 </div>
+                 <div class="profile-actions">
+                     <a class="dropdown-item" href="./profile.php"><i class="fa-solid fa-user-pen"></i> Editar perfil</a>
+                     <div class="dropdown-divider"></div>
+                     <a class="dropdown-item text-danger" href="../logout.php"><i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar sesión</a>
+                 </div>
+             </div>
+         </div>
+     </nav>
+ 
+     <!-- side nav -->
+     <nav class="sidenav">
+         <ul>
+             <?php if (admin_user_can('dashboard')): ?>
+                 <li class="pagebtn <?php echo $initialFrame === 0 ? 'active' : ''; ?>" data-frame="0" data-src="./dashboard.php"><i class="fa-solid fa-chart-line"></i>&nbsp;&nbsp; Panel</li>
+             <?php endif; ?>
+             <?php if (admin_user_can('reservas')): ?>
+                 <li class="pagebtn <?php echo $initialFrame === 1 ? 'active' : ''; ?>" data-frame="1" data-src="./roombook.php"><i class="fa-solid fa-bed"></i>&nbsp;&nbsp; Reservas</li>
++                <li class="pagebtn <?php echo $initialFrame === 2 ? 'active' : ''; ?>" data-frame="2" data-src="./guest-requests.php"><i class="fa-solid fa-bell-concierge"></i>&nbsp;&nbsp; Solicitudes</li>
+             <?php endif; ?>
+             <?php if (admin_user_can('pagos')): ?>
+-                <li class="pagebtn <?php echo $initialFrame === 2 ? 'active' : ''; ?>" data-frame="2" data-src="./payment.php"><i class="fa-solid fa-money-bill-wave"></i>&nbsp;&nbsp; Pagos</li>
++                <li class="pagebtn <?php echo $initialFrame === 3 ? 'active' : ''; ?>" data-frame="3" data-src="./payment.php"><i class="fa-solid fa-money-bill-wave"></i>&nbsp;&nbsp; Pagos</li>
+             <?php endif; ?>
+             <?php if (admin_user_can('habitaciones')): ?>
+-                <li class="pagebtn <?php echo $initialFrame === 3 ? 'active' : ''; ?>" data-frame="3" data-src="./room.php"><i class="fa-solid fa-house"></i>&nbsp;&nbsp; Habitaciones</li>
++                <li class="pagebtn <?php echo $initialFrame === 4 ? 'active' : ''; ?>" data-frame="4" data-src="./room.php"><i class="fa-solid fa-house"></i>&nbsp;&nbsp; Habitaciones</li>
+             <?php endif; ?>
+             <?php if (admin_user_can('personal')): ?>
+-                <li class="pagebtn <?php echo $initialFrame === 4 ? 'active' : ''; ?>" data-frame="4" data-src="./staff.php"><i class="fa-solid fa-user-group"></i>&nbsp;&nbsp; Personal</li>
++                <li class="pagebtn <?php echo $initialFrame === 5 ? 'active' : ''; ?>" data-frame="5" data-src="./staff.php"><i class="fa-solid fa-user-group"></i>&nbsp;&nbsp; Personal</li>
+             <?php endif; ?>
+             <?php if ($hasRecords): ?>
+                 <li class="has-submenu">
+-                    <div class="submenu-trigger <?php echo $initialFrame === 5 ? 'active' : ''; ?>" tabindex="0"><i class="fa-solid fa-clipboard-list"></i>&nbsp;&nbsp; Registros</div>
++                    <div class="submenu-trigger <?php echo $initialFrame === 6 ? 'active' : ''; ?>" tabindex="0"><i class="fa-solid fa-clipboard-list"></i>&nbsp;&nbsp; Registros</div>
+                     <ul class="submenu">
+                         <?php if (admin_user_can('registros.summary')): ?>
+-                            <li class="pagebtn <?php echo ($initialFrame === 5 && $recordsDefaultView === 'summary') ? 'active' : ''; ?>" data-frame="5" data-src="./records.php?view=summary"><i class="fa-solid fa-chart-line"></i>&nbsp;&nbsp; Resumen rápido</li>
++                            <li class="pagebtn <?php echo ($initialFrame === 6 && $recordsDefaultView === 'summary') ? 'active' : ''; ?>" data-frame="6" data-src="./records.php?view=summary"><i class="fa-solid fa-chart-line"></i>&nbsp;&nbsp; Resumen rápido</li>
+                         <?php endif; ?>
+                         <?php if (admin_user_can('registros.rooms')): ?>
+-                            <li class="pagebtn <?php echo ($initialFrame === 5 && $recordsDefaultView === 'rooms') ? 'active' : ''; ?>" data-frame="5" data-src="./records.php?view=rooms"><i class="fa-solid fa-door-open"></i>&nbsp;&nbsp; Registrar habitación</li>
++                            <li class="pagebtn <?php echo ($initialFrame === 6 && $recordsDefaultView === 'rooms') ? 'active' : ''; ?>" data-frame="6" data-src="./records.php?view=rooms"><i class="fa-solid fa-door-open"></i>&nbsp;&nbsp; Registrar habitación</li>
+                         <?php endif; ?>
+                         <?php if (admin_user_can('registros.room-types')): ?>
+-                            <li class="pagebtn <?php echo ($initialFrame === 5 && $recordsDefaultView === 'room-types') ? 'active' : ''; ?>" data-frame="5" data-src="./records.php?view=room-types"><i class="fa-solid fa-layer-group"></i>&nbsp;&nbsp; Registrar tipo de habitación</li>
++                            <li class="pagebtn <?php echo ($initialFrame === 6 && $recordsDefaultView === 'room-types') ? 'active' : ''; ?>" data-frame="6" data-src="./records.php?view=room-types"><i class="fa-solid fa-layer-group"></i>&nbsp;&nbsp; Registrar tipo de habitación</li>
+                         <?php endif; ?>
+                         <?php if (admin_user_can('registros.admins')): ?>
+-                            <li class="pagebtn <?php echo ($initialFrame === 5 && $recordsDefaultView === 'admin-staff') ? 'active' : ''; ?>" data-frame="5" data-src="./records.php?view=admin-staff"><i class="fa-solid fa-user-gear"></i>&nbsp;&nbsp; Registrar administrativos</li>
++                            <li class="pagebtn <?php echo ($initialFrame === 6 && $recordsDefaultView === 'admin-staff') ? 'active' : ''; ?>" data-frame="6" data-src="./records.php?view=admin-staff"><i class="fa-solid fa-user-gear"></i>&nbsp;&nbsp; Registrar administrativos</li>
+                         <?php endif; ?>
+                         <?php if (admin_user_can('registros.products')): ?>
+-                            <li class="pagebtn <?php echo ($initialFrame === 5 && $recordsDefaultView === 'products') ? 'active' : ''; ?>" data-frame="5" data-src="./records.php?view=products"><i class="fa-solid fa-box"></i>&nbsp;&nbsp; Registrar producto</li>
++                            <li class="pagebtn <?php echo ($initialFrame === 6 && $recordsDefaultView === 'products') ? 'active' : ''; ?>" data-frame="6" data-src="./records.php?view=products"><i class="fa-solid fa-box"></i>&nbsp;&nbsp; Registrar producto</li>
+                         <?php endif; ?>
+                         <?php if (admin_user_can('registros.sales')): ?>
+-                            <li class="pagebtn <?php echo ($initialFrame === 5 && $recordsDefaultView === 'sales') ? 'active' : ''; ?>" data-frame="5" data-src="./records.php?view=sales"><i class="fa-solid fa-cash-register"></i>&nbsp;&nbsp; Registrar venta</li>
++                            <li class="pagebtn <?php echo ($initialFrame === 6 && $recordsDefaultView === 'sales') ? 'active' : ''; ?>" data-frame="6" data-src="./records.php?view=sales"><i class="fa-solid fa-cash-register"></i>&nbsp;&nbsp; Registrar venta</li>
+                         <?php endif; ?>
+                         <?php if (admin_user_can('registros.pricing')): ?>
+-                            <li class="pagebtn <?php echo ($initialFrame === 5 && $recordsDefaultView === 'pricing') ? 'active' : ''; ?>" data-frame="5" data-src="./records.php?view=pricing"><i class="fa-solid fa-tags"></i>&nbsp;&nbsp; Tarifas de habitaciones</li>
++                            <li class="pagebtn <?php echo ($initialFrame === 6 && $recordsDefaultView === 'pricing') ? 'active' : ''; ?>" data-frame="6" data-src="./records.php?view=pricing"><i class="fa-solid fa-tags"></i>&nbsp;&nbsp; Tarifas de habitaciones</li>
+                         <?php endif; ?>
+                     </ul>
+                 </li>
+             <?php endif; ?>
+             <?php if (admin_user_can('estado_habitaciones')): ?>
+-                <li class="pagebtn <?php echo $initialFrame === 6 ? 'active' : ''; ?>" data-frame="6" data-src="./room-status.php"><i class="fa-solid fa-eye"></i>&nbsp;&nbsp; Estado</li>
++                <li class="pagebtn <?php echo $initialFrame === 7 ? 'active' : ''; ?>" data-frame="7" data-src="./room-status.php"><i class="fa-solid fa-eye"></i>&nbsp;&nbsp; Estado</li>
+             <?php endif; ?>
+         </ul>
+     </nav>
+ 
+     <!-- main section -->
+     <div class="mainscreen">
+         <iframe class="frames frame1 <?php echo $initialFrame === 0 ? 'active' : ''; ?>" src="<?php echo admin_user_can('dashboard') ? './dashboard.php' : './empty.html'; ?>" frameborder="0"></iframe>
+         <iframe class="frames frame2 <?php echo $initialFrame === 1 ? 'active' : ''; ?>" src="<?php echo admin_user_can('reservas') ? './roombook.php' : './empty.html'; ?>" frameborder="0"></iframe>
+-        <iframe class="frames frame3 <?php echo $initialFrame === 2 ? 'active' : ''; ?>" src="<?php echo admin_user_can('pagos') ? './payment.php' : './empty.html'; ?>" frameborder="0"></iframe>
+-        <iframe class="frames frame4 <?php echo $initialFrame === 3 ? 'active' : ''; ?>" src="<?php echo admin_user_can('habitaciones') ? './room.php' : './empty.html'; ?>" frameborder="0"></iframe>
+-        <iframe class="frames frame5 <?php echo $initialFrame === 4 ? 'active' : ''; ?>" src="<?php echo admin_user_can('personal') ? './staff.php' : './empty.html'; ?>" frameborder="0"></iframe>
+-        <iframe class="frames frame6 <?php echo $initialFrame === 5 ? 'active' : ''; ?>" src="<?php echo $hasRecords ? './records.php?view=' . urlencode($recordsDefaultView) : './empty.html'; ?>" frameborder="0"></iframe>
+-        <iframe class="frames frame7 <?php echo $initialFrame === 6 ? 'active' : ''; ?>" src="<?php echo admin_user_can('estado_habitaciones') ? './room-status.php' : './empty.html'; ?>" frameborder="0"></iframe>
++        <iframe class="frames frame3 <?php echo $initialFrame === 2 ? 'active' : ''; ?>" src="<?php echo admin_user_can('reservas') ? './guest-requests.php' : './empty.html'; ?>" frameborder="0"></iframe>
++        <iframe class="frames frame4 <?php echo $initialFrame === 3 ? 'active' : ''; ?>" src="<?php echo admin_user_can('pagos') ? './payment.php' : './empty.html'; ?>" frameborder="0"></iframe>
++        <iframe class="frames frame5 <?php echo $initialFrame === 4 ? 'active' : ''; ?>" src="<?php echo admin_user_can('habitaciones') ? './room.php' : './empty.html'; ?>" frameborder="0"></iframe>
++        <iframe class="frames frame6 <?php echo $initialFrame === 5 ? 'active' : ''; ?>" src="<?php echo admin_user_can('personal') ? './staff.php' : './empty.html'; ?>" frameborder="0"></iframe>
++        <iframe class="frames frame7 <?php echo $initialFrame === 6 ? 'active' : ''; ?>" src="<?php echo $hasRecords ? './records.php?view=' . urlencode($recordsDefaultView) : './empty.html'; ?>" frameborder="0"></iframe>
++        <iframe class="frames frame8 <?php echo $initialFrame === 7 ? 'active' : ''; ?>" src="<?php echo admin_user_can('estado_habitaciones') ? './room-status.php' : './empty.html'; ?>" frameborder="0"></iframe>
+     </div>
+ 
+     <script src="./javascript/script.js"></script>
+ </body>
+ </html>
+diff --git a/admin/guest-requests.php b/admin/guest-requests.php
+new file mode 100644
+index 0000000000000000000000000000000000000000..05bc2e59b47d1fb016578c4f2844b1be3e47c38c
+--- /dev/null
++++ b/admin/guest-requests.php
+@@ -0,0 +1,311 @@
++<?php
++session_start();
++include '../config.php';
++require_once __DIR__ . '/includes/admin_bootstrap.php';
++
++ensureEmpStructure($conn);
++ensureRoomRates($conn);
++admin_refresh_session($conn, $_SESSION['adminmail'] ?? '');
++admin_require_permission('reservas');
++admin_ensure_guest_portal($conn);
++
++$employee = admin_current_employee();
++$adminEmail = $employee['email'];
++$adminRole = strtolower((string)($employee['role'] ?? ''));
++$audience = (!empty($_SESSION['admin_is_super']) || $adminRole !== 'recepcionista') ? 'admin' : 'recepcion';
++
++$allowedStatuses = ['pendiente','en_proceso','completado','cancelado'];
++$statusFilter = $_GET['status'] ?? '';
++if ($statusFilter !== '' && !in_array($statusFilter, $allowedStatuses, true)) {
++    $statusFilter = '';
++}
++
++$flashMessages = $_SESSION['guest_requests_flash'] ?? [];
++unset($_SESSION['guest_requests_flash']);
++
++if ($_SERVER['REQUEST_METHOD'] === 'POST') {
++    $messages = [];
++
++    if (isset($_POST['update_request'])) {
++        $requestId = (int)($_POST['request_id'] ?? 0);
++        $status = $_POST['status'] ?? '';
++        $note = trim($_POST['response_note'] ?? '');
++        $chargeRaw = trim($_POST['charge_amount'] ?? '');
++        $charge = null;
++        if ($chargeRaw !== '') {
++            $normalized = str_replace(['.', ','], ['', '.'], $chargeRaw);
++            if (is_numeric($normalized)) {
++                $charge = (float)$normalized;
++            }
++        }
++
++        if ($requestId > 0 && in_array($status, $allowedStatuses, true)) {
++            if (guest_portal_update_request($conn, $requestId, $status, $note, $adminEmail, $charge)) {
++                $messages[] = ['type' => 'success', 'text' => 'Solicitud actualizada correctamente.'];
++            } else {
++                $messages[] = ['type' => 'error', 'text' => 'No se pudo actualizar la solicitud.'];
++            }
++        } else {
++            $messages[] = ['type' => 'error', 'text' => 'Datos inválidos para actualizar la solicitud.'];
++        }
++    } elseif (isset($_POST['add_minibar'])) {
++        $reservationId = (int)($_POST['reservation_id'] ?? 0);
++        $concept = trim($_POST['concept'] ?? '');
++        $amountRaw = trim($_POST['amount'] ?? '');
++        $amountNormalized = str_replace(['.', ','], ['', '.'], $amountRaw);
++        $amount = is_numeric($amountNormalized) ? (float)$amountNormalized : null;
++
++        if ($reservationId > 0 && $concept !== '' && $amount !== null) {
++            $userId = null;
++            if ($stmt = $conn->prepare('SELECT user_id FROM roombook WHERE id = ? LIMIT 1')) {
++                $stmt->bind_param('i', $reservationId);
++                if ($stmt->execute()) {
++                    $stmt->bind_result($uid);
++                    if ($stmt->fetch()) {
++                        $userId = $uid ? (int)$uid : null;
++                    }
++                }
++                $stmt->close();
++            }
++
++            $requestId = guest_portal_create_request($conn, $reservationId, $userId, 'minibar', $concept, 'staff', $amount);
++            if ($requestId) {
++                $messages[] = ['type' => 'success', 'text' => 'Consumo de minibar registrado.'];
++                $notifBody = sprintf('Se registró consumo de minibar (%s) por COP %s.', $concept, number_format($amount, 0, ',', '.'));
++                guest_portal_record_notification($conn, 'admin', 'Consumo en minibar', $notifBody, 'admin/guest-requests.php', $reservationId, $requestId);
++                guest_portal_record_notification($conn, 'recepcion', 'Consumo en minibar', $notifBody, 'admin/guest-requests.php', $reservationId, $requestId);
++            } else {
++                $messages[] = ['type' => 'error', 'text' => 'No fue posible registrar el consumo.'];
++            }
++        } else {
++            $messages[] = ['type' => 'error', 'text' => 'Completa los datos para registrar el consumo.'];
++        }
++    } elseif (isset($_POST['mark_notifications'])) {
++        $ids = array_map('intval', $_POST['notification_ids'] ?? []);
++        guest_portal_mark_notifications($conn, $ids, true);
++        $messages[] = ['type' => 'success', 'text' => 'Notificaciones marcadas como leídas.'];
++    }
++
++    $_SESSION['guest_requests_flash'] = $messages;
++    $redirect = 'guest-requests.php';
++    if ($statusFilter !== '') {
++        $redirect .= '?status=' . urlencode($statusFilter);
++    }
++    header('Location: ' . $redirect);
++    exit;
++}
++
++$requests = guest_portal_requests_for_admin($conn, $statusFilter ?: null);
++$notifications = guest_portal_notifications_for_audience($conn, $audience, 8, true);
++$confirmedReservations = guest_portal_confirmed_reservations($conn);
++$requestTypesCatalog = guest_portal_request_types();
++
++function guest_requests_status_badge(string $status): string
++{
++    $label = guest_portal_format_status($status);
++    $class = 'status-' . preg_replace('/[^a-z_\-]/i', '', strtolower($status));
++    return '<span class="badge bg-light text-dark status-badge ' . htmlspecialchars($class) . '">' . htmlspecialchars($label) . '</span>';
++}
++?>
++<!DOCTYPE html>
++<html lang="es">
++<head>
++    <meta charset="UTF-8">
++    <meta http-equiv="X-UA-Compatible" content="IE=edge">
++    <meta name="viewport" content="width=device-width, initial-scale=1.0">
++    <title>Solicitudes de huéspedes</title>
++    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
++    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" integrity="sha512-xh6O/CkQoPOWDdYTDqeRdPCVd1SpvCA9XXcUnZS2FmJNp1coAFzvtCN9BmamE+4aHK8yyUHUSCcJHgXloTyT2A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
++    <style>
++        body{ background:#f5f4f0; }
++        .page-header{ display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:24px; }
++        .card-shadow{ border:none; border-radius:16px; box-shadow:0 16px 32px rgba(0,0,0,.08); }
++        .requests-table th{ background:#f8f1d8; color:#5f4c1f; text-transform:uppercase; font-size:12px; letter-spacing:.04em; }
++        .requests-table td{ vertical-align:middle; }
++        .status-badge{ border-radius:999px; padding:4px 10px; font-size:12px; text-transform:capitalize; }
++        .status-pendiente{ background:rgba(241,196,15,.18); color:#b9770e; }
++        .status-en_proceso{ background:rgba(52,152,219,.18); color:#1f618d; }
++        .status-completado{ background:rgba(39,174,96,.18); color:#1d8348; }
++        .status-cancelado{ background:rgba(231,76,60,.18); color:#943126; }
++        .filter-tabs .nav-link{ border-radius:999px; padding:6px 18px; font-weight:500; color:#5b4a2b; }
++        .filter-tabs .nav-link.active{ background:#d4af37; color:#fff; }
++        .minibar-form .form-control,.minibar-form .form-select{ border-radius:10px; }
++    </style>
++</head>
++<body class="p-4">
++    <div class="container-fluid">
++        <div class="page-header">
++            <div>
++                <h1 class="h3 mb-1">Solicitudes de huéspedes</h1>
++                <p class="text-muted mb-0">Gestiona peticiones en habitación, consumos y asistencia en tiempo real.</p>
++            </div>
++            <form class="d-flex align-items-center gap-2" method="get" action="">
++                <select class="form-select" name="status" onchange="this.form.submit()">
++                    <option value="" <?php echo $statusFilter === '' ? 'selected' : ''; ?>>Todas las solicitudes</option>
++                    <option value="pendiente" <?php echo $statusFilter === 'pendiente' ? 'selected' : ''; ?>>Pendientes</option>
++                    <option value="en_proceso" <?php echo $statusFilter === 'en_proceso' ? 'selected' : ''; ?>>En proceso</option>
++                    <option value="completado" <?php echo $statusFilter === 'completado' ? 'selected' : ''; ?>>Completadas</option>
++                    <option value="cancelado" <?php echo $statusFilter === 'cancelado' ? 'selected' : ''; ?>>Canceladas</option>
++                </select>
++                <?php if ($statusFilter !== ''): ?>
++                    <a class="btn btn-outline-secondary" href="guest-requests.php">Limpiar</a>
++                <?php endif; ?>
++            </form>
++        </div>
++
++        <?php if (!empty($flashMessages)): ?>
++            <?php foreach ($flashMessages as $msg): ?>
++                <div class="alert alert-<?php echo $msg['type'] === 'error' ? 'danger' : 'success'; ?> alert-dismissible fade show" role="alert">
++                    <?php echo htmlspecialchars($msg['text']); ?>
++                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
++                </div>
++            <?php endforeach; ?>
++        <?php endif; ?>
++
++        <div class="row g-4">
++            <div class="col-lg-8">
++                <div class="card card-shadow">
++                    <div class="card-body">
++                        <div class="d-flex justify-content-between align-items-center mb-3">
++                            <h2 class="h5 mb-0">Solicitudes activas</h2>
++                            <span class="badge bg-light text-dark">Total: <?php echo count($requests); ?></span>
++                        </div>
++                        <div class="table-responsive">
++                            <table class="table requests-table align-middle">
++                                <thead>
++                                    <tr>
++                                        <th>ID</th>
++                                        <th>Huésped</th>
++                                        <th>Servicio</th>
++                                        <th>Estado</th>
++                                        <th>Actualizado</th>
++                                        <th>Acciones</th>
++                                    </tr>
++                                </thead>
++                                <tbody>
++                                    <?php if (empty($requests)): ?>
++                                        <tr>
++                                            <td colspan="6" class="text-center text-muted py-4">No hay solicitudes para mostrar.</td>
++                                        </tr>
++                                    <?php else: ?>
++                                        <?php foreach ($requests as $request): ?>
++                                            <?php
++                                                $guestName = $request['reservation_name'] ?? ($request['Username'] ?? 'Huésped');
++                                                $guestEmail = $request['reservation_email'] ?? ($request['user_email'] ?? '');
++                                                $typeLabel = $requestTypesCatalog[$request['request_type']] ?? ucfirst($request['request_type']);
++                                                $updatedAt = $request['updated_at'] ?? $request['created_at'] ?? '';
++                                                $updatedLabel = $updatedAt ? date('d/m/Y H:i', strtotime($updatedAt)) : '—';
++                                                $roomNumber = $request['room_number'] ?? '';
++                                                $reservationDates = '';
++                                                if (!empty($request['cin']) && !empty($request['cout'])) {
++                                                    $reservationDates = date('d/m', strtotime($request['cin'])) . ' - ' . date('d/m', strtotime($request['cout']));
++                                                }
++                                            ?>
++                                            <tr>
++                                                <td>#<?php echo (int)$request['id']; ?></td>
++                                                <td>
++                                                    <strong><?php echo htmlspecialchars($guestName); ?></strong><br>
++                                                    <small class="text-muted"><?php echo htmlspecialchars($guestEmail); ?></small><br>
++                                                    <?php if ($roomNumber): ?><span class="badge bg-secondary">Hab. <?php echo htmlspecialchars($roomNumber); ?></span><?php endif; ?>
++                                                </td>
++                                                <td>
++                                                    <div class="fw-semibold"><?php echo htmlspecialchars($typeLabel); ?></div>
++                                                    <div class="text-muted small">Reserva #<?php echo (int)($request['roombook_id'] ?? 0); ?><?php if ($reservationDates): ?> · <?php echo htmlspecialchars($reservationDates); ?><?php endif; ?></div>
++                                                    <?php if (!empty($request['details'])): ?>
++                                                        <div class="text-muted small mt-1"><?php echo nl2br(htmlspecialchars($request['details'])); ?></div>
++                                                    <?php endif; ?>
++                                                    <?php if ($request['charge_amount'] !== null): ?>
++                                                        <div class="small text-success mt-1">Consumo: COP <?php echo number_format((float)$request['charge_amount'], 0, ',', '.'); ?></div>
++                                                    <?php endif; ?>
++                                                </td>
++                                                <td><?php echo guest_requests_status_badge($request['status'] ?? 'pendiente'); ?></td>
++                                                <td><?php echo htmlspecialchars($updatedLabel); ?></td>
++                                                <td>
++                                                    <form method="post" class="d-grid gap-2">
++                                                        <input type="hidden" name="request_id" value="<?php echo (int)$request['id']; ?>">
++                                                        <select name="status" class="form-select form-select-sm">
++                                                            <?php foreach ($allowedStatuses as $statusKey): ?>
++                                                                <option value="<?php echo $statusKey; ?>" <?php echo ($request['status'] === $statusKey) ? 'selected' : ''; ?>><?php echo guest_portal_format_status($statusKey); ?></option>
++                                                            <?php endforeach; ?>
++                                                        </select>
++                                                        <textarea name="response_note" class="form-control form-control-sm" rows="2" placeholder="Nota interna (opcional)"><?php echo htmlspecialchars($request['response_note'] ?? ''); ?></textarea>
++                                                        <input type="text" name="charge_amount" class="form-control form-control-sm" placeholder="COP" value="<?php echo $request['charge_amount'] !== null ? number_format((float)$request['charge_amount'], 2, '.', '') : ''; ?>">
++                                                        <button class="btn btn-sm btn-primary" type="submit" name="update_request" value="1">Actualizar</button>
++                                                    </form>
++                                                </td>
++                                            </tr>
++                                        <?php endforeach; ?>
++                                    <?php endif; ?>
++                                </tbody>
++                            </table>
++                        </div>
++                    </div>
++                </div>
++            </div>
++            <div class="col-lg-4">
++                <div class="card card-shadow mb-4">
++                    <div class="card-body">
++                        <h2 class="h6 mb-3">Registrar consumo de minibar</h2>
++                        <form method="post" class="minibar-form d-grid gap-3">
++                            <div>
++                                <label for="reservation_id" class="form-label">Reserva</label>
++                                <select class="form-select" name="reservation_id" id="reservation_id" required>
++                                    <option value="" selected disabled>Selecciona una reserva</option>
++                                    <?php foreach ($confirmedReservations as $reservation): ?>
++                                        <option value="<?php echo (int)$reservation['id']; ?>">
++                                            #<?php echo (int)$reservation['id']; ?> · <?php echo htmlspecialchars($reservation['Name'] ?? $reservation['Email'] ?? 'Huésped'); ?>
++                                        </option>
++                                    <?php endforeach; ?>
++                                </select>
++                            </div>
++                            <div>
++                                <label for="concept" class="form-label">Detalle</label>
++                                <input type="text" class="form-control" id="concept" name="concept" placeholder="Ej. Bebida, snack" required>
++                            </div>
++                            <div>
++                                <label for="amount" class="form-label">Monto (COP)</label>
++                                <input type="number" step="0.01" min="0" class="form-control" id="amount" name="amount" required>
++                            </div>
++                            <button class="btn btn-success" type="submit" name="add_minibar" value="1"><i class="fa-solid fa-plus"></i> Registrar consumo</button>
++                        </form>
++                    </div>
++                </div>
++
++                <div class="card card-shadow">
++                    <div class="card-body">
++                        <div class="d-flex justify-content-between align-items-center mb-2">
++                            <h2 class="h6 mb-0">Notificaciones recientes</h2>
++                            <?php if (!empty($notifications)): ?>
++                            <form method="post" class="d-inline">
++                                <?php foreach ($notifications as $notif): ?>
++                                    <input type="hidden" name="notification_ids[]" value="<?php echo (int)$notif['id']; ?>">
++                                <?php endforeach; ?>
++                                <button class="btn btn-link btn-sm" type="submit" name="mark_notifications" value="1">Marcar como leídas</button>
++                            </form>
++                            <?php endif; ?>
++                        </div>
++                        <ul class="list-unstyled mb-0 d-grid gap-3">
++                            <?php if (empty($notifications)): ?>
++                                <li class="text-muted small">Sin notificaciones pendientes.</li>
++                            <?php else: ?>
++                                <?php foreach ($notifications as $notif): ?>
++                                    <li>
++                                        <div class="fw-semibold"><?php echo htmlspecialchars($notif['title']); ?></div>
++                                        <div class="text-muted small mb-1"><?php echo htmlspecialchars($notif['message']); ?></div>
++                                        <div class="text-muted small"><?php echo date('d/m/Y H:i', strtotime($notif['created_at'])); ?></div>
++                                        <?php if (!empty($notif['link'])): ?>
++                                            <a class="small" href="<?php echo htmlspecialchars($notif['link']); ?>" target="_top">Ver detalle</a>
++                                        <?php endif; ?>
++                                    </li>
++                                <?php endforeach; ?>
++                            <?php endif; ?>
++                        </ul>
++                    </div>
++                </div>
++            </div>
++        </div>
++    </div>
++
++    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
++</body>
++</html>
+diff --git a/admin/includes/admin_bootstrap.php b/admin/includes/admin_bootstrap.php
+index f944267d8c1f6c374722efe993028ee5c63a26ee..3cf101844730b5710f39e9d7ab6005497403a5fd 100644
+--- a/admin/includes/admin_bootstrap.php
++++ b/admin/includes/admin_bootstrap.php
+@@ -1,29 +1,31 @@
+ <?php
+ /**
+  * Utilidades comunes para el panel administrativo.
+  */
++
++require_once dirname(__DIR__, 2) . '/includes/guest_portal.php';
+ if (!function_exists('admin_column_exists')) {
+     function admin_column_exists(mysqli $conn, string $table, string $column): bool
+     {
+         $sql = sprintf("SHOW COLUMNS FROM `%s` LIKE '%s'", $table, $conn->real_escape_string($column));
+         $result = mysqli_query($conn, $sql);
+         if ($result === false) {
+             return false;
+         }
+         $exists = mysqli_num_rows($result) > 0;
+         mysqli_free_result($result);
+         return $exists;
+     }
+ }
+ 
+ if (!function_exists('admin_available_permissions')) {
+     function admin_available_permissions(): array
+     {
+         return [
+             'dashboard'             => 'Panel principal',
+             'reservas'              => 'Reservas',
+             'pagos'                 => 'Pagos y facturación',
+             'habitaciones'          => 'Habitaciones',
+             'personal'              => 'Gestión de personal',
+             'registros.summary'     => 'Resumen de registros',
+             'registros.rooms'       => 'Registrar habitación',
+@@ -77,50 +79,57 @@ if (!function_exists('ensureEmpStructure')) {
+             mysqli_query($conn, "ALTER TABLE emp_login ADD COLUMN Role VARCHAR(60) NULL AFTER FullName");
+         }
+         if (!admin_column_exists($conn, 'emp_login', 'Permissions')) {
+             mysqli_query($conn, "ALTER TABLE emp_login ADD COLUMN Permissions TEXT NULL AFTER Role");
+         }
+         if (!admin_column_exists($conn, 'emp_login', 'IsSuperAdmin')) {
+             mysqli_query($conn, "ALTER TABLE emp_login ADD COLUMN IsSuperAdmin TINYINT(1) NOT NULL DEFAULT 0 AFTER Permissions");
+         }
+         if (!admin_column_exists($conn, 'emp_login', 'CreatedAt')) {
+             mysqli_query($conn, "ALTER TABLE emp_login ADD COLUMN CreatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER IsSuperAdmin");
+         }
+         if (!admin_column_exists($conn, 'emp_login', 'AvatarPath')) {
+             mysqli_query($conn, "ALTER TABLE emp_login ADD COLUMN AvatarPath VARCHAR(255) NULL AFTER CreatedAt");
+         }
+ 
+         $allPermissions = json_encode(array_keys(admin_available_permissions()), JSON_UNESCAPED_UNICODE);
+         $stmt = $conn->prepare("UPDATE emp_login SET Permissions = ?, Role = 'Super Administrador', FullName = IF(FullName IS NULL OR FullName = '', 'Administrador General', FullName), IsSuperAdmin = 1 WHERE Emp_Email = 'admin@hotelandino.com'");
+         if ($stmt) {
+             $stmt->bind_param('s', $allPermissions);
+             $stmt->execute();
+             $stmt->close();
+         }
+     }
+ }
+ 
++if (!function_exists('admin_ensure_guest_portal')) {
++    function admin_ensure_guest_portal(mysqli $conn): void
++    {
++        guest_portal_ensure_schema($conn);
++    }
++}
++
+ if (!function_exists('ensureRoomRates')) {
+     function ensureRoomRates(mysqli $conn): void
+     {
+         mysqli_query(
+             $conn,
+             "CREATE TABLE IF NOT EXISTS room_rates (" .
+             " room_type VARCHAR(80) NOT NULL PRIMARY KEY," .
+             " base_price DECIMAL(10,2) NOT NULL DEFAULT 0," .
+             " updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" .
+             ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+         );
+ 
+         $defaults = admin_default_room_rates();
+         $stmt = $conn->prepare("INSERT INTO room_rates (room_type, base_price) VALUES (?, ?) ON DUPLICATE KEY UPDATE base_price = base_price");
+         if ($stmt) {
+             foreach ($defaults as $type => $price) {
+                 $stmt->bind_param('sd', $type, $price);
+                 $stmt->execute();
+             }
+             $stmt->close();
+         }
+     }
+ }
+ 
+ if (!function_exists('ensureStaffStructure')) {
+@@ -301,27 +310,26 @@ if (!function_exists('admin_has_records_access')) {
+         }
+         return false;
+     }
+ }
+ 
+ if (!function_exists('admin_first_records_view')) {
+     function admin_first_records_view(): string
+     {
+         $views = [
+             'summary'      => 'registros.summary',
+             'rooms'        => 'registros.rooms',
+             'room-types'   => 'registros.room-types',
+             'admin-staff'  => 'registros.admins',
+             'products'     => 'registros.products',
+             'sales'        => 'registros.sales',
+             'pricing'      => 'registros.pricing',
+         ];
+         foreach ($views as $view => $permission) {
+             if (admin_user_can($permission)) {
+                 return $view;
+             }
+         }
+         return 'summary';
+     }
+ }
+-}
+ 
+diff --git a/admin/roombook.php b/admin/roombook.php
+index a7371deb03c93780e3f38169152fc7e3bd7d8bc0..e817447e4e0ca5cd463c5f0b49bee72902962c73 100644
+--- a/admin/roombook.php
++++ b/admin/roombook.php
+@@ -1,32 +1,33 @@
+ <?php
+ session_start();
+ include '../config.php';
+ require_once __DIR__ . '/includes/admin_bootstrap.php';
+ 
+ ensureEmpStructure($conn);
+ ensureRoomRates($conn);
++admin_ensure_guest_portal($conn);
+ admin_refresh_session($conn, $_SESSION['adminmail'] ?? '');
+ admin_require_permission('reservas');
+ 
+ if (isset($_POST['guestdetailsubmit'])) {
+     $Name = $_POST['Name'] ?? '';
+     $Email = $_POST['Email'] ?? '';
+     $Country = $_POST['Country'] ?? '';
+     $Phone = $_POST['Phone'] ?? '';
+     $RoomType = $_POST['RoomType'] ?? '';
+     $Bed = $_POST['Bed'] ?? '';
+     $NoofRoom = $_POST['NoofRoom'] ?? '';
+     $Meal = $_POST['Meal'] ?? '';
+     $cin = $_POST['cin'] ?? '';
+     $cout = $_POST['cout'] ?? '';
+ 
+     if ($Name === '' || $Email === '' || $Country === '') {
+         echo "<script>swal({title: 'Completa los datos del huésped', icon: 'error'});</script>";
+     } else {
+         $sta = 'NotConfirm';
+         $sql = "INSERT INTO roombook (Name, Email, Country, Phone, RoomType, Bed, NoofRoom, Meal, cin, cout, stat, nodays) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, DATEDIFF(?, ?))";
+         $stmt = $conn->prepare($sql);
+         if ($stmt) {
+             $stmt->bind_param('sssssssssssss', $Name, $Email, $Country, $Phone, $RoomType, $Bed, $NoofRoom, $Meal, $cin, $cout, $sta, $cout, $cin);
+             if ($stmt->execute()) {
+                 echo "<script>swal({title: 'Reserva registrada', icon: 'success'});</script>";
+diff --git a/admin/roomconfirm.php b/admin/roomconfirm.php
+index aecdf84d1827392be760785a6b73c90126cdb772..461ac76b959fee494da87a15f6839468e6d6baee 100644
+--- a/admin/roomconfirm.php
++++ b/admin/roomconfirm.php
+@@ -1,33 +1,34 @@
+ <?php
+ 
+ session_start();
+ include '../config.php';
+ require_once __DIR__ . '/includes/admin_bootstrap.php';
+ 
+ ensureEmpStructure($conn);
+ ensureRoomRates($conn);
++admin_ensure_guest_portal($conn);
+ admin_refresh_session($conn, $_SESSION['adminmail'] ?? '');
+ admin_require_permission('reservas');
+ 
+ $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+ if ($id <= 0) {
+     header('Location: roombook.php');
+     exit;
+ }
+ 
+ $sql ="Select * from roombook where id = '$id'";
+ $re = mysqli_query($conn,$sql);
+ while($row=mysqli_fetch_array($re))
+ {
+ 	$Name = $row['Name'];
+     $Email = $row['Email'];
+     $Country = $row['Country'];
+     $Phone = $row['Phone'];
+     $RoomType = $row['RoomType'];
+     $Bed = $row['Bed'];
+     $NoofRoom = $row['NoofRoom'];
+     $Meal = $row['Meal'];
+     $cin = $row['cin'];
+     $cout = $row['cout'];
+     $noofday = $row['nodays'];
+     $stat = $row['stat'];
+diff --git a/css/home.css b/css/home.css
+index 6fbac4ea7f8e5d4e9d3cdb9d82756c4adee18c00..bf0d9336b3d04473bc5e486dba84410af884b425 100644
+--- a/css/home.css
++++ b/css/home.css
+@@ -47,55 +47,99 @@ nav ul{
+   display:flex; align-items:center; justify-content:center;
+   gap:12px; height:100%; width:auto; margin:0;
+ }
+ nav ul li{
+   list-style:none; position:relative;
+   display:flex; align-items:center; height:100%;
+ }
+ nav ul li a{
+   display:flex; align-items:center; justify-content:center;
+   height:100%; padding:0 12px; line-height:1;
+   text-decoration:none; color:#000;
+   font-weight:500;
+ }
+ nav ul li a:hover{ color:var(--gold-dark); }
+ 
+ /* Subrayado pegado al texto */
+ nav ul li a::after{
+   content:""; position:absolute; left:50%; transform:translateX(-50%);
+   bottom:20px; /* ✅ más pegado al texto */
+   height:2px; width:0; background:var(--gold-dark);
+   transition:width .2s ease;
+ }
+ nav ul li a:hover::after{ width:100%; }
+ 
+ 
+-/* Botón “Cerrar sesión” */
+-nav .btn, nav ul .btn{
+-  display:inline-flex; align-items:center; justify-content:center;
+-  height:40px; padding:0 16px; font-weight:600; border-radius:20px;
+-}
++/* Perfil en la barra */
++.nav-profile{ position:relative; display:flex; align-items:center; }
++.nav-profile-trigger{
++  display:flex; align-items:center; justify-content:center;
++  width:44px; height:44px;
++  border-radius:50%;
++  border:0;
++  background:var(--gold);
++  color:#fff;
++  font-weight:600;
++  font-size:18px;
++  cursor:pointer;
++  transition:transform .2s ease, box-shadow .2s ease;
++}
++.nav-profile-trigger:focus{ outline:2px solid var(--gold-dark); outline-offset:2px; }
++.nav-profile-trigger:hover{ transform:translateY(-1px); box-shadow:0 6px 16px rgba(0,0,0,.16); }
++.nav-profile-avatar{ display:inline-flex; align-items:center; justify-content:center; width:100%; height:100%; border-radius:50%; }
++.nav-profile-avatar--lg{ width:60px; height:60px; font-size:26px; }
++.nav-profile-dropdown{
++  position:absolute;
++  top:calc(100% + 10px);
++  right:0;
++  width:220px;
++  background:#fff;
++  border-radius:14px;
++  box-shadow:0 12px 32px rgba(0,0,0,.15);
++  padding:16px;
++  display:none;
++  flex-direction:column;
++  gap:12px;
++  z-index:500;
++}
++.nav-profile.is-open .nav-profile-dropdown{ display:flex; }
++.nav-profile-summary{ display:flex; align-items:center; gap:12px; }
++.nav-profile-text{ display:flex; flex-direction:column; font-size:14px; color:var(--ink); }
++.nav-profile-text strong{ font-size:16px; color:var(--ink-2); }
++.nav-profile-actions{ display:flex; flex-direction:column; gap:8px; }
++.nav-profile-link{
++  display:flex; align-items:center; gap:8px;
++  font-size:14px; color:var(--ink);
++  text-decoration:none;
++  padding:6px 8px;
++  border-radius:10px;
++  transition:background .2s ease, color .2s ease;
++}
++.nav-profile-link:hover{ background:rgba(212,175,55,0.12); color:var(--gold-dark); }
++.nav-profile-divider{ height:1px; background:#ececec; margin:4px 0; }
++.nav-profile-link--logout{ color:#c0392b; }
++.nav-profile-link--logout:hover{ background:rgba(192,57,43,.12); color:#c0392b; }
+ 
+ /* ===== Overrides Bootstrap ===== */
+ .btn-danger{
+   background:linear-gradient(180deg,var(--gold-light),var(--gold)) !important;
+   border:none !important; border-radius:20px !important;
+   padding:8px 16px !important; font-weight:bold !important; color:#fff !important;
+   box-shadow:0 3px 8px rgba(0,0,0,.2); transition:all .2s ease;
+ }
+ .btn-danger:hover{
+   background:linear-gradient(180deg,var(--gold),var(--gold-dark)) !important;
+   transform:translateY(-1px); color:#fff !important;
+ }
+ /* Botón reservar (por si usas ambas variantes) */
+ .btn-primary.bookbtn, a.btn-primary.bookbtn,
+ .bookbtn{
+   background:linear-gradient(180deg,var(--gold-light),var(--gold)) !important;
+   border:none !important; color:#fff !important;
+   border-radius:12px !important; font-weight:bold !important;
+   padding:8px 16px !important; transition:all .2s ease;
+   box-shadow:0 4px 10px rgba(0,0,0,0.2);
+ }
+ .btn-primary.bookbtn:hover, a.btn-primary.bookbtn:hover,
+ .bookbtn:hover{
+   background:linear-gradient(180deg,var(--gold),var(--gold-dark)) !important;
+   transform:translateY(-1px); color:#fff !important;
+@@ -176,50 +220,98 @@ nav .btn, nav ul .btn{
+   height:70%; width:100%;
+   display:flex; justify-content:space-around; flex-wrap:nowrap;
+ }
+ .facility .box{
+   height:100%; width:310px; border:10px solid #fff;
+   background:#3a2d16; background-size:cover; background-position:center;
+ }
+ .facility .box h2{
+   text-align:center; position:relative; top:80%; color:#fff; background:#0000005e;
+ }
+ .box:nth-child(1){ background-image:url(../image/swimingpool.jpg); }
+ .box:nth-child(2){ background-image:url(../image/spa.jpg); }
+ .box:nth-child(3){ background-image:url(../image/food.jpg); }
+ .box:nth-child(4){ background-image:url(../image/gym.jpg); }
+ .box:nth-child(5){ background-image:url(../image/heli.jpg); }
+ 
+ /* ===== Footer ===== */
+ #contactus{
+   height:70px; width:100%; background:#000;
+   display:flex; justify-content:space-between; align-items:center; padding:0 100px;
+ }
+ #contactus .social{ width:200px; display:flex; justify-content:space-evenly; gap:8px; }
+ #contactus i{ color:var(--gold-light); font-size:25px; cursor:pointer; }
+ #contactus .createdby{ color:#f6f6f6; }
+ 
++/* ===== Guest Experience ===== */
++.guest-experience{ padding:120px 100px 60px; background:#faf7ef; }
++.guest-experience__layout{ display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:24px; align-items:stretch; }
++.guest-card{ background:#fff; border-radius:20px; padding:24px; box-shadow:0 12px 30px rgba(0,0,0,.08); display:flex; flex-direction:column; gap:18px; }
++.guest-card__title{ font-size:22px; color:var(--ink-2); margin:0; }
++.guest-card__subtitle{ font-size:14px; color:#6b6b6b; margin:0; }
++.guest-card__stats{ list-style:none; display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:12px; padding:0; margin:0; }
++.guest-card__stats li{ background:#fff7da; border-radius:14px; padding:12px; text-align:center; display:flex; flex-direction:column; gap:4px; }
++.guest-card__stats .label{ font-size:13px; color:#6f5b36; }
++.guest-card__stats .value{ font-size:20px; font-weight:700; color:var(--ink-2); }
++.guest-card--room{ position:relative; overflow:hidden; }
++.guest-room__header{ display:flex; justify-content:space-between; align-items:flex-start; gap:16px; }
++.guest-room__grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:16px; padding:16px 0; }
++.guest-room__grid .label{ font-size:12px; text-transform:uppercase; color:#877042; letter-spacing:.04em; }
++.guest-room__grid .value{ font-size:16px; font-weight:600; color:var(--ink-2); }
++.status-badge{ display:inline-flex; align-items:center; padding:6px 12px; border-radius:999px; font-size:13px; font-weight:600; text-transform:capitalize; background:#f1f1f1; color:var(--ink); }
++.status-confirm, .status-confirmada{ background:rgba(46,204,113,.18); color:#1e8449; }
++.status-pendiente, .status-notconfirm{ background:rgba(241,196,15,.18); color:#b9770e; }
++.status-en_proceso, .status-ocupado, .status-checkin{ background:rgba(52,152,219,.18); color:#1f618d; }
++.status-completado{ background:rgba(39,174,96,.18); color:#1d8348; }
++.status-cancelado{ background:rgba(231,76,60,.18); color:#943126; }
++.guest-request-form__form{ display:flex; flex-direction:column; gap:12px; }
++.guest-request-form__form .btn{ align-self:flex-start; border-radius:12px; }
++.guest-requests__list{ list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:12px; }
++.guest-requests__header{ display:flex; justify-content:space-between; align-items:center; gap:12px; }
++.guest-requests__type{ font-weight:600; color:var(--ink-2); }
++.guest-requests__details{ font-size:14px; color:#5b5b5b; margin:8px 0 4px; white-space:pre-wrap; }
++.guest-requests__meta{ display:flex; flex-wrap:wrap; gap:12px; font-size:12px; color:#7f7f7f; }
++.guest-muted{ color:#8c836c; font-size:14px; }
++.guest-empty{ text-align:center; display:flex; flex-direction:column; gap:14px; align-items:center; justify-content:center; min-height:260px; }
++.guest-empty .btn{ border-radius:20px; }
++.guest-history{ margin-top:32px; background:#fff; border-radius:20px; padding:24px; box-shadow:0 12px 30px rgba(0,0,0,.06); }
++.guest-table{ width:100%; border-collapse:collapse; }
++.guest-table th, .guest-table td{ padding:12px 14px; border-bottom:1px solid #f0e4c6; font-size:14px; text-align:left; }
++.guest-table tbody tr:hover{ background:#fff7da; }
++.guest-table th{ font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:#7a6a3d; }
++
++@media (max-width: 992px){
++  nav{ padding:0 24px; }
++  .guest-experience{ padding:110px 24px 50px; }
++}
++
++@media (max-width: 600px){
++  .guest-card__stats{ grid-template-columns:1fr; }
++  .guest-history{ padding:16px; }
++  .guest-table th, .guest-table td{ padding:10px 8px; font-size:13px; }
++}
++
+ /* ===== Responsive ===== */
+ @media (max-width:30rem){
+   nav{ justify-content:center; position:relative; background:rgba(212,175,55,.25); padding:0 24px; }
+   nav ul{ display:none; }
+ 
+   #firstsection{ height:50vh; text-align:center; }
+   #firstsection .carousel-inner{ height:50vh; }
+   #firstsection .carousel-item img{ height:50vh; }
+   #firstsection .welcomeline{ height:50vh; }
+   #firstsection .welcometag{ font-size:50px; line-height:60px; }
+ 
+   #secondsection{ height:auto; }
+   #secondsection img{ display:none; }
+   .ourroom{ top:30px; height:auto; }
+   .roomselect{ flex-direction:column; align-items:center; gap:20px; }
+   .roomselect .roombox{ width:75%; }
+ 
+   #thirdsection{ height:100vh; }
+   .facility{ height:70%; flex-wrap:wrap; }
+   .facility .box{ height:55%; width:50%; }
+   .facility .box h2{ font-size:18px; }
+   .box:nth-child(5){ display:none; }
+ 
+   #contactus{ padding:0 30px; }
+ }
+diff --git a/home.php b/home.php
+index 62be81773d1dd89dafe1598bb7d8f66cb0099ba9..22a2dfba9829af1409fb7d62f4f7509316cd17f1 100644
+--- a/home.php
++++ b/home.php
+@@ -1,37 +1,122 @@
+ <?php
+ include 'config.php';
++require_once __DIR__ . '/includes/guest_portal.php';
+ session_start();
+ 
+ /* ===========
+    Autenticación
+    =========== */
+ if (empty($_SESSION['usermail'])) {
+   header("Location: index.php");
+   exit;
+ }
++
+ $usermail = $_SESSION['usermail'];
++
++guest_portal_ensure_schema($conn);
++
++$currentUser = guest_portal_fetch_user($conn, $usermail);
++if (!$currentUser) {
++  header("Location: logout.php");
++  exit;
++}
++
++$userId = (int) ($currentUser['UserID'] ?? 0);
++$profileName = $currentUser['Username'] ?: $usermail;
++$profileInitial = strtoupper(substr($profileName, 0, 1));
++$requestTypes = guest_portal_request_types();
++
++$reservations = $userId ? guest_portal_reservations_for_user($conn, $userId) : [];
++$activeReservation = $userId ? guest_portal_active_reservation($conn, $userId) : null;
++$userRequests = $userId ? guest_portal_requests_for_user($conn, $userId) : [];
++$openRequestsCount = count(array_filter(
++  $userRequests,
++  static fn($item) => in_array($item['status'] ?? '', ['pendiente', 'en_proceso'], true)
++));
++
++$requestsByReservation = [];
++foreach ($userRequests as $requestRow) {
++  $rid = (int) ($requestRow['roombook_id'] ?? 0);
++  if (!isset($requestsByReservation[$rid])) {
++    $requestsByReservation[$rid] = [];
++  }
++  $requestsByReservation[$rid][] = $requestRow;
++}
++
++$confirmedReservations = array_filter(
++  $reservations,
++  static fn(array $row): bool => in_array($row['stat'] ?? '', ['Confirm', 'Ocupado', 'CheckIn'], true)
++);
++$confirmedReservationIds = array_map(static fn($row) => (int) ($row['id'] ?? 0), $confirmedReservations);
++
++if ($userId && isset($_POST['create_service_request'])) {
++  $reservationId = (int) ($_POST['reservation_id'] ?? 0);
++  $requestType = $_POST['request_type'] ?? '';
++  $requestDetail = trim($_POST['request_detail'] ?? '');
++
++  $isValidReservation = in_array($reservationId, $confirmedReservationIds, true);
++  $isValidType = isset($requestTypes[$requestType]);
++
++  if ($isValidReservation && $isValidType) {
++    $requestId = guest_portal_create_request($conn, $reservationId, $userId, $requestType, $requestDetail);
++
++    if ($requestId) {
++      $selectedReservation = null;
++      foreach ($reservations as $row) {
++        if ((int) ($row['id'] ?? 0) === $reservationId) {
++          $selectedReservation = $row;
++          break;
++        }
++      }
++      $message = sprintf('Nueva solicitud de %s para %s', $profileName, strtolower($requestTypes[$requestType] ?? 'servicio'));
++      guest_portal_record_notification($conn, 'admin', 'Solicitud de habitación', $message, 'admin/guest-requests.php', $reservationId, $requestId);
++      guest_portal_record_notification($conn, 'recepcion', 'Solicitud de habitación', $message, 'admin/guest-requests.php', $reservationId, $requestId);
++
++      $_SESSION['guest_request_flash'] = [
++        'type' => 'success',
++        'text' => 'Tu solicitud fue enviada al equipo del hotel. Te contactaremos pronto.',
++      ];
++    } else {
++      $_SESSION['guest_request_flash'] = [
++        'type' => 'error',
++        'text' => 'No fue posible registrar tu solicitud. Intenta nuevamente.',
++      ];
++    }
++  } else {
++    $_SESSION['guest_request_flash'] = [
++      'type' => 'error',
++      'text' => 'Selecciona una reserva y un servicio válidos para continuar.',
++    ];
++  }
++
++  header('Location: home.php');
++  exit;
++}
++
++$guestRequestFlash = $_SESSION['guest_request_flash'] ?? null;
++unset($_SESSION['guest_request_flash']);
+ ?>
+ <!DOCTYPE html>
+ <html lang="es">
+ <head>
+     <meta charset="UTF-8">
+     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <link rel="stylesheet" href="./css/home.css">
+     <title>Hotel Andino</title>
+     <!-- boot -->
+     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+     <!-- fontawesome -->
+     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" integrity="sha512-xh6O/CkQoPOWDdYTDqeRdPCVd1SpvCA9XXcUnZS2FmJNp1coAFzvtCN9BmamE+4aHK8yyUHUSCcJHgXloTyT2A==" crossorigin="anonymous" referrerpolicy="no-referrer"/>
+     <!-- sweet alert -->
+     <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+     <link rel="stylesheet" href="./admin/css/roombook.css">
+ 
+     <!-- ======= NUEVO: estilos FAB + popup chat en esquina ======= -->
+     <style>
+       #guestdetailpanel{ display:none; }
+       #guestdetailpanel .middle{ height: 450px; }
+ 
+       /* ==== FAB Chatbot ==== */
+       .chat-fab{
+@@ -118,54 +203,84 @@ $usermail = $_SESSION['usermail'];
+       }
+ 
+       @media (max-width: 600px){
+         .chatbot-popup{
+           right: calc(20px + env(safe-area-inset-right));
+           width: 94vw;
+           max-height: 78vh;
+         }
+       }
+     </style>
+ </head>
+ 
+ <body>
+   <nav>
+     <div class="logo">
+       <img class="HotelAndino" src="./image/LogoAndino.png" alt="logo">
+       <p>Hotel Andino</p>
+     </div>
+     <ul>
+       <li><a href="#firstsection">Inicio</a></li>
+       <li><a href="#secondsection">Habitaciones</a></li>
+       <li><a href="#thirdsection">Servicios</a></li>
+       <!-- EDITADO: Se elimina el enlace que abría el chatbot desde la navbar -->
+       <li><a href="turismo.php">Turismo</a></li>
+       <li><a href="#contactus">Contáctanos</a></li>
+-      <a href="./logout.php"><button class="btn btn-danger">Cerrar Sesión</button></a>
++      <li class="nav-profile">
++        <button class="nav-profile-trigger" type="button" aria-haspopup="true" aria-expanded="false">
++          <span class="nav-profile-avatar" aria-hidden="true"><?php echo htmlspecialchars($profileInitial); ?></span>
++          <span class="visually-hidden">Abrir menú de perfil</span>
++        </button>
++        <div class="nav-profile-dropdown" role="menu">
++          <div class="nav-profile-summary">
++            <span class="nav-profile-avatar nav-profile-avatar--lg" aria-hidden="true"><?php echo htmlspecialchars($profileInitial); ?></span>
++            <div class="nav-profile-text">
++              <strong><?php echo htmlspecialchars($profileName); ?></strong>
++              <span><?php echo htmlspecialchars($usermail); ?></span>
++            </div>
++          </div>
++          <div class="nav-profile-actions">
++            <a class="nav-profile-link" href="#guest-experience"><i class="fa-solid fa-door-open"></i> Mi habitación</a>
++            <a class="nav-profile-link" href="onboarding.php"><i class="fa-solid fa-sliders"></i> Preferencias</a>
++            <div class="nav-profile-divider"></div>
++            <a class="nav-profile-link nav-profile-link--logout" href="./logout.php"><i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar sesión</a>
++          </div>
++        </div>
++      </li>
+     </ul>
+   </nav>
+ 
++  <?php if (!empty($guestRequestFlash)): ?>
++    <script>
++      swal({
++        title: <?php echo json_encode($guestRequestFlash['type'] === 'success' ? '¡Listo!' : 'Aviso'); ?>,
++        text: <?php echo json_encode($guestRequestFlash['text']); ?>,
++        icon: <?php echo json_encode($guestRequestFlash['type'] === 'success' ? 'success' : 'error'); ?>
++      });
++    </script>
++  <?php endif; ?>
++
+   <section id="firstsection" class="carousel slide carousel_section" data-bs-ride="carousel">
+     <div class="carousel-inner">
+         <div class="carousel-item active">
+             <img class="carousel-image" src="./image/hotel1.jpg" alt="Hotel 1">
+         </div>
+         <div class="carousel-item">
+             <img class="carousel-image" src="./image/hotel2.jpg" alt="Hotel 2">
+         </div>
+         <div class="carousel-item">
+             <img class="carousel-image" src="./image/hotel3.jpg" alt="Hotel 3">
+         </div>
+         <div class="carousel-item">
+             <img class="carousel-image" src="./image/hotel4.jpg" alt="Hotel 4">
+         </div>
+ 
+         <div class="welcomeline">
+           <h1 class="welcometag">Bienvenido al cielo en la tierra</h1>
+         </div>
+ 
+       <!-- bookbox -->
+       <div id="guestdetailpanel">
+         <form action="" method="POST" class="guestdetailpanelform">
+             <div class="head">
+                 <h3>Reserva</h3>
+                 <i class="fa-solid fa-circle-xmark" onclick="closebox()"></i>
+@@ -241,82 +356,290 @@ $usermail = $_SESSION['usermail'];
+         <!-- ==== room book php ====-->
+         <?php
+             if (isset($_POST['guestdetailsubmit'])) {
+                 $Name     = trim($_POST['Name'] ?? '');
+                 $Email    = trim($_POST['Email'] ?? '');
+                 $Country  = trim($_POST['Country'] ?? '');
+                 $Phone    = trim($_POST['Phone'] ?? '');
+                 $RoomType = trim($_POST['RoomType'] ?? '');
+                 $Bed      = trim($_POST['Bed'] ?? '');
+                 $NoofRoom = (int)($_POST['NoofRoom'] ?? 0);
+                 $Meal     = trim($_POST['Meal'] ?? '');
+                 $cin      = $_POST['cin'] ?? '';
+                 $cout     = $_POST['cout'] ?? '';
+ 
+                 if ($Name === "" || $Email === "" || $Country === "" || $RoomType === "" || $Bed === "" || $NoofRoom < 1 || $Meal === "" || $cin === "" || $cout === "") {
+                     echo "<script>swal({ title: 'Completa los datos correctamente', icon: 'error' });</script>";
+                 } else {
+                     $d1 = strtotime($cin);
+                     $d2 = strtotime($cout);
+                     if ($d1 === false || $d2 === false || $d2 <= $d1) {
+                         echo "<script>swal({ title: 'Rango de fechas inválido', icon: 'error' });</script>";
+                     } else {
+                         $nodays = (int)round(($d2 - $d1) / 86400); // días
+                         $sta = "NotConfirm";
+ 
+-                        $sql = "INSERT INTO roombook
+-                                (Name, Email, Country, Phone, RoomType, Bed, NoofRoom, Meal, cin, cout, stat, nodays)
+-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
++                        $sql = "INSERT INTO roombook"
++                                . "(user_id, Name, Email, Country, Phone, RoomType, Bed, NoofRoom, Meal, cin, cout, stat, nodays)"
++                                . "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+ 
+                         if ($stmt = mysqli_prepare($conn, $sql)) {
+                             mysqli_stmt_bind_param(
+                                 $stmt,
+-                                "ssssssissssi",
+-                                $Name, $Email, $Country, $Phone, $RoomType, $Bed, $NoofRoom, $Meal, $cin, $cout, $sta, $nodays
++                                "issssssissssi",
++                                $userId,
++                                $Name,
++                                $Email,
++                                $Country,
++                                $Phone,
++                                $RoomType,
++                                $Bed,
++                                $NoofRoom,
++                                $Meal,
++                                $cin,
++                                $cout,
++                                $sta,
++                                $nodays
+                             );
+                             $ok = mysqli_stmt_execute($stmt);
++                            $reservationId = $ok ? mysqli_insert_id($conn) : 0;
+                             mysqli_stmt_close($stmt);
+ 
+-                            if ($ok) {
+-                                echo "<script>
+-                                    swal({ title: 'Reserva exitosa', icon: 'success' });
+-                                </script>";
++                            if ($ok && $reservationId > 0) {
++                                $notifMessage = sprintf('Nueva reserva pendiente de %s (%s)', $Name, $Email);
++                                guest_portal_record_notification($conn, 'admin', 'Reserva solicitada', $notifMessage, 'admin/roombook.php', $reservationId, null);
++                                guest_portal_record_notification($conn, 'recepcion', 'Reserva solicitada', $notifMessage, 'admin/roombook.php', $reservationId, null);
++
++                                echo "<script>"
++                                    . "swal({ title: 'Reserva exitosa', text: 'Nuestro equipo confirmará tu habitación muy pronto.', icon: 'success' });"
++                                . "</script>";
+                             } else {
+                                 echo "<script>swal({ title: 'Algo salió mal al guardar', icon: 'error' });</script>";
+                             }
+                         } else {
+                             echo "<script>swal({ title: 'Error preparando consulta', icon: 'error' });</script>";
+                         }
+                     }
+                 }
+             }
+             ?>
+           </div>
+ 
+     </div>
+   </section>
+ 
++  <?php
++    $activeReservationRequests = [];
++    $minibarTotal = 0.0;
++    if ($activeReservation) {
++      $activeReservationId = (int) ($activeReservation['id'] ?? 0);
++      $activeReservationRequests = $requestsByReservation[$activeReservationId] ?? [];
++      foreach ($activeReservationRequests as $req) {
++        if (($req['request_type'] ?? '') === 'minibar' && $req['charge_amount'] !== null) {
++          $minibarTotal += (float) $req['charge_amount'];
++        }
++      }
++    }
++  ?>
++
++  <section id="guest-experience" class="guest-experience">
++    <div class="guest-experience__layout">
++      <article class="guest-card guest-card--profile">
++        <h2 class="guest-card__title">Hola, <?php echo htmlspecialchars($profileName); ?></h2>
++        <p class="guest-card__subtitle">Tu correo registrado es <strong><?php echo htmlspecialchars($usermail); ?></strong></p>
++        <ul class="guest-card__stats">
++          <li>
++            <span class="label">Reservas totales</span>
++            <span class="value"><?php echo count($reservations); ?></span>
++          </li>
++          <li>
++            <span class="label">Reservas confirmadas</span>
++            <span class="value"><?php echo count($confirmedReservationIds); ?></span>
++          </li>
++          <li>
++            <span class="label">Solicitudes abiertas</span>
++            <span class="value"><?php echo $openRequestsCount; ?></span>
++          </li>
++        </ul>
++      </article>
++
++      <article class="guest-card guest-card--room">
++        <?php if ($activeReservation): ?>
++          <?php
++            $activeId = (int) ($activeReservation['id'] ?? 0);
++            $activeStatus = $activeReservation['stat'] ?? '';
++            $statusLabel = match ($activeStatus) {
++              'Confirm'              => 'Confirmada',
++              'Ocupado', 'CheckIn'   => 'En curso',
++              'NotConfirm'           => 'Pendiente',
++              default                => ucfirst(strtolower($activeStatus)),
++            };
++            $checkIn  = !empty($activeReservation['cin']) ? date('d/m/Y', strtotime($activeReservation['cin'])) : '—';
++            $checkOut = !empty($activeReservation['cout']) ? date('d/m/Y', strtotime($activeReservation['cout'])) : '—';
++            $roomNumber = $activeReservation['room_number'] ?? null;
++            $roomType   = $activeReservation['RoomType'] ?? ($activeReservation['room_type_name'] ?? 'Habitación');
++            $activeRequestsCount = count($activeReservationRequests);
++          ?>
++          <header class="guest-room__header">
++            <div>
++              <h3 class="guest-card__title">Tu habitación</h3>
++              <p class="guest-card__subtitle">
++                <?php echo htmlspecialchars($roomType); ?>
++                <?php if ($roomNumber): ?> · #<?php echo htmlspecialchars($roomNumber); ?><?php endif; ?>
++              </p>
++            </div>
++            <span class="status-badge status-<?php echo htmlspecialchars(strtolower($activeStatus)); ?>">
++              <?php echo htmlspecialchars($statusLabel); ?>
++            </span>
++          </header>
++          <div class="guest-room__grid">
++            <div>
++              <span class="label">Check-in</span>
++              <span class="value"><?php echo htmlspecialchars($checkIn); ?></span>
++            </div>
++            <div>
++              <span class="label">Check-out</span>
++              <span class="value"><?php echo htmlspecialchars($checkOut); ?></span>
++            </div>
++            <div>
++              <span class="label">Solicitudes registradas</span>
++              <span class="value"><?php echo $activeRequestsCount; ?></span>
++            </div>
++            <div>
++              <span class="label">Consumo minibar</span>
++              <span class="value"><?php echo $minibarTotal > 0 ? 'COP ' . number_format($minibarTotal, 0, ',', '.') : 'Sin consumos'; ?></span>
++            </div>
++          </div>
++
++          <div class="guest-request-form">
++            <h4>Solicita asistencia</h4>
++            <form method="post" class="guest-request-form__form">
++              <input type="hidden" name="reservation_id" value="<?php echo $activeId; ?>">
++              <label for="request_type" class="form-label">¿Qué necesitas?</label>
++              <select class="form-select" id="request_type" name="request_type" required>
++                <option value="" disabled selected>Selecciona una opción</option>
++                <?php foreach ($requestTypes as $typeKey => $typeLabel): ?>
++                  <option value="<?php echo htmlspecialchars($typeKey); ?>"><?php echo htmlspecialchars($typeLabel); ?></option>
++                <?php endforeach; ?>
++              </select>
++              <label for="request_detail" class="form-label">Detalles adicionales</label>
++              <textarea id="request_detail" name="request_detail" rows="3" class="form-control" placeholder="Cuéntanos si necesitas algo específico (opcional)"></textarea>
++              <button class="btn btn-primary" type="submit" name="create_service_request" value="1">
++                <i class="fa-solid fa-paper-plane"></i> Enviar solicitud
++              </button>
++            </form>
++          </div>
++
++          <div class="guest-requests">
++            <h4>Historial de solicitudes</h4>
++            <?php if (!empty($activeReservationRequests)): ?>
++              <ul class="guest-requests__list">
++                <?php foreach ($activeReservationRequests as $request): ?>
++                  <?php
++                    $badgeStatus = guest_portal_format_status($request['status'] ?? '');
++                    $badgeClass = 'status-' . preg_replace('/[^a-z_\-]/i', '', strtolower($request['status'] ?? 'pendiente'));
++                    $updatedAt = $request['updated_at'] ?? $request['created_at'] ?? '';
++                    $updatedLabel = $updatedAt ? date('d/m/Y H:i', strtotime($updatedAt)) : '—';
++                    $typeLabel = $requestTypes[$request['request_type']] ?? ucfirst($request['request_type'] ?? 'Servicio');
++                  ?>
++                  <li>
++                    <div class="guest-requests__header">
++                      <span class="guest-requests__type"><?php echo htmlspecialchars($typeLabel); ?></span>
++                      <span class="status-badge <?php echo htmlspecialchars($badgeClass); ?>"><?php echo htmlspecialchars($badgeStatus); ?></span>
++                    </div>
++                    <?php if (!empty($request['details'])): ?>
++                      <p class="guest-requests__details"><?php echo nl2br(htmlspecialchars($request['details'])); ?></p>
++                    <?php endif; ?>
++                    <div class="guest-requests__meta">
++                      <span>Actualizado: <?php echo htmlspecialchars($updatedLabel); ?></span>
++                      <?php if ($request['charge_amount'] !== null): ?>
++                        <span>Consumo: COP <?php echo number_format((float) $request['charge_amount'], 0, ',', '.'); ?></span>
++                      <?php endif; ?>
++                    </div>
++                  </li>
++                <?php endforeach; ?>
++              </ul>
++            <?php else: ?>
++              <p class="guest-muted">Aún no registras solicitudes para esta reserva.</p>
++            <?php endif; ?>
++          </div>
++        <?php else: ?>
++          <div class="guest-empty">
++            <h3 class="guest-card__title">Aún no tienes una habitación confirmada</h3>
++            <p class="guest-card__subtitle">Cuando el equipo confirme tu reserva podrás gestionar tus solicitudes aquí.</p>
++            <a href="#firstsection" class="btn btn-primary"><i class="fa-solid fa-calendar-plus"></i> Reservar ahora</a>
++          </div>
++        <?php endif; ?>
++      </article>
++    </div>
++
++    <div class="guest-history">
++      <h3 class="guest-card__title">Mis reservas</h3>
++      <?php if (!empty($reservations)): ?>
++        <div class="table-responsive">
++          <table class="guest-table">
++            <thead>
++              <tr>
++                <th>#</th>
++                <th>Tipo</th>
++                <th>Ingreso</th>
++                <th>Salida</th>
++                <th>Estado</th>
++                <th>Noches</th>
++              </tr>
++            </thead>
++            <tbody>
++              <?php foreach ($reservations as $reservation): ?>
++                <?php
++                  $status = $reservation['stat'] ?? '';
++                  $statusText = match ($status) {
++                    'Confirm'              => 'Confirmada',
++                    'NotConfirm'           => 'Pendiente',
++                    'Ocupado', 'CheckIn'   => 'En curso',
++                    default                => ucfirst(strtolower($status)),
++                  };
++                  $cin = !empty($reservation['cin']) ? date('d/m/Y', strtotime($reservation['cin'])) : '—';
++                  $cout = !empty($reservation['cout']) ? date('d/m/Y', strtotime($reservation['cout'])) : '—';
++                ?>
++                <tr>
++                  <td><?php echo (int) ($reservation['id'] ?? 0); ?></td>
++                  <td><?php echo htmlspecialchars($reservation['RoomType'] ?? 'Habitación'); ?></td>
++                  <td><?php echo htmlspecialchars($cin); ?></td>
++                  <td><?php echo htmlspecialchars($cout); ?></td>
++                  <td><span class="status-badge status-<?php echo htmlspecialchars(strtolower($status)); ?>"><?php echo htmlspecialchars($statusText); ?></span></td>
++                  <td><?php echo (int) ($reservation['nodays'] ?? 0); ?></td>
++                </tr>
++              <?php endforeach; ?>
++            </tbody>
++          </table>
++        </div>
++      <?php else: ?>
++        <p class="guest-muted">Aún no has registrado reservas. ¡Empieza creando una desde el formulario superior!</p>
++      <?php endif; ?>
++    </div>
++  </section>
++
+   <section id="secondsection">
+     <img src="./image/homeanimatebg.svg" alt="Decoración">
+     <div class="ourroom">
+       <h1 class="head">≼ Nuestras habitaciones ≽</h1>
+       <div class="roomselect">
+         <div class="roombox">
+           <div class="hotelphoto h1"></div>
+           <div class="roomdata">
+             <h2>Habitación Doble</h2>
+             <div class="services">
+               <i class="fa-solid fa-wifi"></i>
+               <i class="fa-solid fa-burger"></i>
+               <i class="fa-solid fa-spa"></i>
+               <i class="fa-solid fa-dumbbell"></i>
+               <i class="fa-solid fa-person-swimming"></i>
+             </div>
+             <button class="btn btn-primary bookbtn" onclick="openbookbox()">Reservar</button>
+           </div>
+         </div>
+         <div class="roombox">
+           <div class="hotelphoto h2"></div>
+           <div class="roomdata">
+             <h2>Habitación Suite</h2>
+             <div class="services">
+               <i class="fa-solid fa-wifi"></i>
+@@ -395,50 +718,83 @@ $usermail = $_SESSION['usermail'];
+   </div>
+   <button id="close-btn" class="icon-btn" aria-label="Cerrar" onclick="toggleChatbot()">
+     <i class="fa-solid fa-chevron-down"></i>
+   </button>
+ </div>
+     <div id="chat-box" class="chat-box"></div>
+     <div class="chat-input">
+       <input type="text" id="user-input" placeholder="Escribe tu mensaje..." />
+       <button id="send-btn">Enviar</button>
+     </div>
+   </div>
+ 
+   <!-- ======= NUEVO: FAB para abrir/cerrar el chat ======= -->
+ <button id="chat-fab" class="chat-fab" aria-label="Abrir chat" title="Chatear" data-open="false">
+   <i class="fa-solid fa-robot icon-robot" aria-hidden="true"></i>
+ </button>
+ 
+ </body>
+ 
+ <script>
+   // ===== Reserva =====
+   var bookbox = document.getElementById("guestdetailpanel");
+   function openbookbox(){ bookbox.style.display = "flex"; }
+   function closebox(){ bookbox.style.display = "none"; }
+ 
++  // ===== Perfil =====
++  (function(){
++    const profile = document.querySelector('.nav-profile');
++    if (!profile) return;
++    const trigger = profile.querySelector('.nav-profile-trigger');
++    const dropdown = profile.querySelector('.nav-profile-dropdown');
++
++    const setOpen = (open) => {
++      if (!dropdown) return;
++      profile.classList.toggle('is-open', open);
++      if (trigger) trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
++    };
++
++    if (trigger) trigger.addEventListener('click', (event) => {
++      event.preventDefault();
++      event.stopPropagation();
++      const isOpen = profile.classList.contains('is-open');
++      setOpen(!isOpen);
++    });
++
++    document.addEventListener('click', (event) => {
++      if (!profile.contains(event.target)) {
++        setOpen(false);
++      }
++    });
++
++    document.addEventListener('keydown', (event) => {
++      if (event.key === 'Escape') {
++        setOpen(false);
++      }
++    });
++  })();
++
+   // ===== Chatbot =====
+   function toggleChatbot(forceClose){
+     const chatbotPopup = document.getElementById('chatbot-popup');
+     const fab = document.getElementById('chat-fab');
+     if(!chatbotPopup || !fab) return;
+ 
+     // Estado actual según display inline
+     const isHidden = chatbotPopup.style.display === 'none' || chatbotPopup.style.display === '';
+     const shouldOpen = (typeof forceClose === 'boolean') ? !forceClose : isHidden;
+ 
+     chatbotPopup.style.display = shouldOpen ? 'block' : 'none';
+     fab.setAttribute('data-open', String(shouldOpen));
+     fab.setAttribute('aria-label', shouldOpen ? 'Cerrar chat' : 'Abrir chat');
+     fab.title = shouldOpen ? 'Cerrar chat' : 'Chatear';
+ 
+     // Mensaje de bienvenida si abre por primera vez
+     if (shouldOpen && document.getElementById('chat-box').children.length === 0) {
+       appendMessage('bot', "👋 Hola, soy el asistente virtual del Hotel Andino. ¿En qué puedo ayudarte hoy?");
+     }
+ 
+     // Persistir estado
+     try{ localStorage.setItem('chatOpen', String(shouldOpen)); }catch(e){}
+   }
+ 
+   async function sendMessage() {
+diff --git a/hotelandino.sql b/hotelandino.sql
+index 2f1fc7aa7520f12e0b42dcd21fb8e64902b8a6b7..5c4c7201c64a4c6195c7381a19b1a41e03a4ff2c 100644
+--- a/hotelandino.sql
++++ b/hotelandino.sql
+@@ -167,90 +167,140 @@ CREATE TABLE `sales` (
+ -- ======================================================
+ -- Tabla: room_stays (detalle de huéspedes por habitación)
+ -- ======================================================
+ CREATE TABLE `room_stays` (
+   `room_id` INT NOT NULL,
+   `guest_id` VARCHAR(40) NOT NULL,
+   `guest_name` VARCHAR(120) NOT NULL,
+   `nationality` VARCHAR(80) NOT NULL,
+   `check_in_date` DATE NOT NULL,
+   `check_in_time` TIME NOT NULL,
+   `check_out_date` DATE NOT NULL,
+   `receptionist_email` VARCHAR(190) NOT NULL,
+   `price` DECIMAL(10,2) NOT NULL DEFAULT 0,
+   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+   PRIMARY KEY (`room_id`),
+   CONSTRAINT `fk_room_stays_room` FOREIGN KEY (`room_id`) REFERENCES `room`(`id`) ON DELETE CASCADE
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+ -- ======================================================
+ -- Tabla: roombook (reservas)
+ -- ======================================================
+ CREATE TABLE `roombook` (
+   `id` INT NOT NULL AUTO_INCREMENT,
+   `room_id` INT NULL,
++  `user_id` INT NULL,
+   `Name` VARCHAR(50) NOT NULL,
+   `Email` VARCHAR(50) NOT NULL,
+   `Country` VARCHAR(30) NOT NULL,
+   `Phone` VARCHAR(30) NOT NULL,
+   `RoomType` VARCHAR(30) NOT NULL,
+   `Bed` VARCHAR(30) NOT NULL,
+   `Meal` VARCHAR(30) NOT NULL,
+   `NoofRoom` VARCHAR(30) NOT NULL,
+   `cin` DATE NOT NULL,
+   `cout` DATE NOT NULL,
+   `nodays` INT NOT NULL,
+   `stat` VARCHAR(30) NOT NULL,
++  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
++  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+   PRIMARY KEY (`id`),
+   KEY `idx_roombook_room_id` (`room_id`),
++  KEY `idx_roombook_user_id` (`user_id`),
+   CONSTRAINT `fk_roombook_room`
+     FOREIGN KEY (`room_id`) REFERENCES `room`(`id`)
+-    ON UPDATE CASCADE
++    ON UPDATE CASCADE,
++  CONSTRAINT `fk_roombook_user`
++    FOREIGN KEY (`user_id`) REFERENCES `signup`(`UserID`)
++    ON DELETE SET NULL
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+ -- ======================================================
+ -- Tabla: payment (pagos)
+ -- ======================================================
+ CREATE TABLE `payment` (
+   `id` INT NOT NULL AUTO_INCREMENT,
+   `Name` VARCHAR(30) NOT NULL,
+   `Email` VARCHAR(30) NOT NULL,
+   `RoomType` VARCHAR(30) NOT NULL,
+   `Bed` VARCHAR(30) NOT NULL,
+   `NoofRoom` INT NOT NULL,
+   `cin` DATE NOT NULL,
+   `cout` DATE NOT NULL,
+   `noofdays` INT NOT NULL,
+   `roomtotal` DECIMAL(10,2) NOT NULL,
+   `bedtotal` DECIMAL(10,2) NOT NULL,
+   `meal` VARCHAR(30) NOT NULL,
+   `mealtotal` DECIMAL(10,2) NOT NULL,
+   `finaltotal` DECIMAL(10,2) NOT NULL,
+   PRIMARY KEY (`id`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
++-- ======================================================
++-- Tabla: guest_service_requests (solicitudes durante la estancia)
++-- ======================================================
++CREATE TABLE `guest_service_requests` (
++  `id` INT NOT NULL AUTO_INCREMENT,
++  `roombook_id` INT NOT NULL,
++  `user_id` INT NULL,
++  `request_type` VARCHAR(40) NOT NULL,
++  `details` TEXT NULL,
++  `status` ENUM('pendiente','en_proceso','completado','cancelado') NOT NULL DEFAULT 'pendiente',
++  `charge_amount` DECIMAL(10,2) NULL,
++  `requested_by` ENUM('guest','staff') NOT NULL DEFAULT 'guest',
++  `response_note` TEXT NULL,
++  `handled_by` VARCHAR(190) NULL,
++  `resolved_at` DATETIME NULL,
++  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
++  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
++  PRIMARY KEY (`id`),
++  KEY `idx_guest_requests_room` (`roombook_id`),
++  KEY `idx_guest_requests_user` (`user_id`),
++  CONSTRAINT `fk_guest_requests_reservation` FOREIGN KEY (`roombook_id`) REFERENCES `roombook`(`id`) ON DELETE CASCADE,
++  CONSTRAINT `fk_guest_requests_user` FOREIGN KEY (`user_id`) REFERENCES `signup`(`UserID`) ON DELETE SET NULL
++) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
++
++-- ======================================================
++-- Tabla: system_notifications (alertas para staff)
++-- ======================================================
++CREATE TABLE `system_notifications` (
++  `id` INT NOT NULL AUTO_INCREMENT,
++  `audience` ENUM('admin','recepcion','staff') NOT NULL DEFAULT 'admin',
++  `title` VARCHAR(190) NOT NULL,
++  `message` TEXT NOT NULL,
++  `link` VARCHAR(255) NULL,
++  `related_reservation_id` INT NULL,
++  `related_request_id` INT NULL,
++  `is_read` TINYINT(1) NOT NULL DEFAULT 0,
++  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
++  PRIMARY KEY (`id`),
++  KEY `idx_notifications_audience` (`audience`),
++  KEY `idx_notifications_reservation` (`related_reservation_id`),
++  KEY `idx_notifications_request` (`related_request_id`)
++) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
++
+ -- ======================================================
+ -- Tabla: staff (personal)
+ -- ======================================================
+ CREATE TABLE `staff` (
+   `id` INT NOT NULL AUTO_INCREMENT,
+   `name` VARCHAR(120) NOT NULL,
+   `work` VARCHAR(80) NOT NULL,
+   `CreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+   PRIMARY KEY (`id`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+ -- ======================================================
+ -- Tabla: preference_catalog (catálogo opcional)
+ -- ======================================================
+ CREATE TABLE `preference_catalog` (
+   `pref_key` VARCHAR(30) NOT NULL,
+   `label` VARCHAR(50) NOT NULL,
+   `place_types` VARCHAR(255) NOT NULL,   -- tipos de Google Places separados por coma
+   `active` TINYINT(1) NOT NULL DEFAULT 1,
+   PRIMARY KEY (`pref_key`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+ -- Semillas de catálogo (opcional)
+ INSERT INTO `preference_catalog` (`pref_key`, `label`, `place_types`, `active`) VALUES
+ ('nature',    'Naturaleza',        'park,tourist_attraction',                    1),
+diff --git a/includes/guest_portal.php b/includes/guest_portal.php
+new file mode 100644
+index 0000000000000000000000000000000000000000..913f9a47b0dab63b4cc5b229d2047c9cd855554a
+--- /dev/null
++++ b/includes/guest_portal.php
+@@ -0,0 +1,418 @@
++<?php
++/**
++ * Funciones de apoyo para el portal del huésped y las operaciones
++ * compartidas entre la web pública y el panel administrativo.
++ */
++
++if (!function_exists('guest_portal_column_exists')) {
++    function guest_portal_column_exists(mysqli $conn, string $table, string $column): bool
++    {
++        $table = $conn->real_escape_string($table);
++        $column = $conn->real_escape_string($column);
++        $sql = "SHOW COLUMNS FROM `{$table}` LIKE '{$column}'";
++        if (!$result = $conn->query($sql)) {
++            return false;
++        }
++        $exists = $result->num_rows > 0;
++        $result->free();
++        return $exists;
++    }
++}
++
++if (!function_exists('guest_portal_constraint_exists')) {
++    function guest_portal_constraint_exists(mysqli $conn, string $table, string $constraint): bool
++    {
++        $sql = "SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND CONSTRAINT_NAME = ? LIMIT 1";
++        $stmt = $conn->prepare($sql);
++        if (!$stmt) {
++            return false;
++        }
++        $stmt->bind_param('ss', $table, $constraint);
++        if (!$stmt->execute()) {
++            $stmt->close();
++            return false;
++        }
++        $stmt->store_result();
++        $exists = $stmt->num_rows > 0;
++        $stmt->free_result();
++        $stmt->close();
++        return $exists;
++    }
++}
++
++if (!function_exists('guest_portal_ensure_schema')) {
++    function guest_portal_ensure_schema(mysqli $conn): void
++    {
++        // --- roombook ---
++        if (!guest_portal_column_exists($conn, 'roombook', 'user_id')) {
++            $conn->query("ALTER TABLE roombook ADD COLUMN user_id INT NULL AFTER room_id");
++        }
++        if (!guest_portal_column_exists($conn, 'roombook', 'created_at')) {
++            $conn->query("ALTER TABLE roombook ADD COLUMN created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER stat");
++        }
++        if (!guest_portal_column_exists($conn, 'roombook', 'updated_at')) {
++            $conn->query("ALTER TABLE roombook ADD COLUMN updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER created_at");
++        }
++        if (!guest_portal_constraint_exists($conn, 'roombook', 'fk_roombook_user')) {
++            $conn->query("ALTER TABLE roombook ADD CONSTRAINT fk_roombook_user FOREIGN KEY (user_id) REFERENCES signup(UserID) ON DELETE SET NULL");
++        }
++
++        // --- guest_service_requests ---
++        $conn->query("CREATE TABLE IF NOT EXISTS guest_service_requests (
++            id INT NOT NULL AUTO_INCREMENT,
++            roombook_id INT NOT NULL,
++            user_id INT NULL,
++            request_type VARCHAR(40) NOT NULL,
++            details TEXT NULL,
++            status ENUM('pendiente','en_proceso','completado','cancelado') NOT NULL DEFAULT 'pendiente',
++            charge_amount DECIMAL(10,2) NULL,
++            requested_by ENUM('guest','staff') NOT NULL DEFAULT 'guest',
++            response_note TEXT NULL,
++            handled_by VARCHAR(190) NULL,
++            resolved_at DATETIME NULL,
++            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
++            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
++            PRIMARY KEY (id),
++            KEY idx_guest_requests_user (user_id),
++            KEY idx_guest_requests_room (roombook_id),
++            CONSTRAINT fk_guest_requests_reservation FOREIGN KEY (roombook_id) REFERENCES roombook(id) ON DELETE CASCADE,
++            CONSTRAINT fk_guest_requests_user FOREIGN KEY (user_id) REFERENCES signup(UserID) ON DELETE SET NULL
++        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
++
++        if (!guest_portal_column_exists($conn, 'guest_service_requests', 'charge_amount')) {
++            $conn->query("ALTER TABLE guest_service_requests ADD COLUMN charge_amount DECIMAL(10,2) NULL AFTER status");
++        }
++        if (!guest_portal_column_exists($conn, 'guest_service_requests', 'requested_by')) {
++            $conn->query("ALTER TABLE guest_service_requests ADD COLUMN requested_by ENUM('guest','staff') NOT NULL DEFAULT 'guest' AFTER charge_amount");
++        }
++        if (!guest_portal_column_exists($conn, 'guest_service_requests', 'response_note')) {
++            $conn->query("ALTER TABLE guest_service_requests ADD COLUMN response_note TEXT NULL AFTER requested_by");
++        }
++        if (!guest_portal_column_exists($conn, 'guest_service_requests', 'handled_by')) {
++            $conn->query("ALTER TABLE guest_service_requests ADD COLUMN handled_by VARCHAR(190) NULL AFTER response_note");
++        }
++        if (!guest_portal_column_exists($conn, 'guest_service_requests', 'resolved_at')) {
++            $conn->query("ALTER TABLE guest_service_requests ADD COLUMN resolved_at DATETIME NULL AFTER handled_by");
++        }
++
++        // --- notifications ---
++        $conn->query("CREATE TABLE IF NOT EXISTS system_notifications (
++            id INT NOT NULL AUTO_INCREMENT,
++            audience ENUM('admin','recepcion','staff') NOT NULL DEFAULT 'admin',
++            title VARCHAR(190) NOT NULL,
++            message TEXT NOT NULL,
++            link VARCHAR(255) NULL,
++            related_reservation_id INT NULL,
++            related_request_id INT NULL,
++            is_read TINYINT(1) NOT NULL DEFAULT 0,
++            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
++            PRIMARY KEY (id),
++            KEY idx_notifications_audience (audience),
++            KEY idx_notifications_reservation (related_reservation_id),
++            KEY idx_notifications_request (related_request_id)
++        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
++    }
++}
++
++if (!function_exists('guest_portal_fetch_user')) {
++    function guest_portal_fetch_user(mysqli $conn, string $email): ?array
++    {
++        $sql = "SELECT UserID, Username, Email FROM signup WHERE Email = ? LIMIT 1";
++        $stmt = $conn->prepare($sql);
++        if (!$stmt) {
++            return null;
++        }
++        $stmt->bind_param('s', $email);
++        if (!$stmt->execute()) {
++            $stmt->close();
++            return null;
++        }
++        $result = $stmt->get_result();
++        $user = $result ? $result->fetch_assoc() : null;
++        $stmt->close();
++        return $user ?: null;
++    }
++}
++
++if (!function_exists('guest_portal_reservations_for_user')) {
++    function guest_portal_reservations_for_user(mysqli $conn, int $userId): array
++    {
++        $sql = "SELECT r.*, p.finaltotal, p.mealtotal, p.roomtotal, p.bedtotal
++                FROM roombook r
++                LEFT JOIN payment p ON p.id = r.id
++                WHERE r.user_id = ?
++                ORDER BY r.created_at DESC, r.id DESC";
++        $stmt = $conn->prepare($sql);
++        if (!$stmt) {
++            return [];
++        }
++        $stmt->bind_param('i', $userId);
++        if (!$stmt->execute()) {
++            $stmt->close();
++            return [];
++        }
++        $result = $stmt->get_result();
++        $reservations = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
++        $stmt->close();
++        return $reservations;
++    }
++}
++
++if (!function_exists('guest_portal_active_reservation')) {
++    function guest_portal_active_reservation(mysqli $conn, int $userId): ?array
++    {
++        $sql = "SELECT r.*, rm.room_number, rm.type AS room_type_name, rm.bedding AS room_bedding,
++                       p.finaltotal, p.mealtotal, p.roomtotal, p.bedtotal
++                FROM roombook r
++                LEFT JOIN room rm ON rm.id = r.room_id
++                LEFT JOIN payment p ON p.id = r.id
++                WHERE r.user_id = ? AND r.stat IN ('Confirm','Ocupado','CheckIn')
++                ORDER BY r.cin DESC, r.id DESC
++                LIMIT 1";
++        $stmt = $conn->prepare($sql);
++        if (!$stmt) {
++            return null;
++        }
++        $stmt->bind_param('i', $userId);
++        if (!$stmt->execute()) {
++            $stmt->close();
++            return null;
++        }
++        $result = $stmt->get_result();
++        $reservation = $result ? $result->fetch_assoc() : null;
++        $stmt->close();
++        return $reservation ?: null;
++    }
++}
++
++if (!function_exists('guest_portal_request_types')) {
++    function guest_portal_request_types(): array
++    {
++        return [
++            'toalla'      => 'Toalla adicional',
++            'jabon'       => 'Jabón / amenities',
++            'asistencia'  => 'Asistencia de recepción',
++            'minibar'     => 'Consumo de minibar',
++            'otro'        => 'Otro servicio'
++        ];
++    }
++}
++
++if (!function_exists('guest_portal_create_request')) {
++    function guest_portal_create_request(mysqli $conn, int $reservationId, ?int $userId, string $type, string $details, string $requestedBy = 'guest', ?float $charge = null): ?int
++    {
++        $sql = "INSERT INTO guest_service_requests (roombook_id, user_id, request_type, details, requested_by, charge_amount)
++                VALUES (?, NULLIF(?,0), ?, ?, ?, NULLIF(?, -1))";
++        $stmt = $conn->prepare($sql);
++        if (!$stmt) {
++            return null;
++        }
++        $userIdParam = $userId ? (int)$userId : 0;
++        $chargeParam = ($charge !== null) ? (float)$charge : -1.0;
++        $stmt->bind_param('iisssd', $reservationId, $userIdParam, $type, $details, $requestedBy, $chargeParam);
++        if (!$stmt->execute()) {
++            $stmt->close();
++            return null;
++        }
++        $id = $stmt->insert_id;
++        $stmt->close();
++        return $id > 0 ? $id : null;
++    }
++}
++
++if (!function_exists('guest_portal_requests_for_user')) {
++    function guest_portal_requests_for_user(mysqli $conn, int $userId): array
++    {
++        $sql = "SELECT r.id, r.request_type, r.details, r.status, r.charge_amount, r.created_at, r.updated_at, r.roombook_id,
++                       rb.RoomType, rb.stat, rb.cin, rb.cout, rb.room_id
++                FROM guest_service_requests r
++                INNER JOIN roombook rb ON rb.id = r.roombook_id
++                WHERE r.user_id = ?
++                ORDER BY r.created_at DESC";
++        $stmt = $conn->prepare($sql);
++        if (!$stmt) {
++            return [];
++        }
++        $stmt->bind_param('i', $userId);
++        if (!$stmt->execute()) {
++            $stmt->close();
++            return [];
++        }
++        $result = $stmt->get_result();
++        $requests = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
++        $stmt->close();
++        return $requests;
++    }
++}
++
++if (!function_exists('guest_portal_requests_for_admin')) {
++    function guest_portal_requests_for_admin(mysqli $conn, ?string $statusFilter = null): array
++    {
++        $sql = "SELECT r.*, s.Username, s.Email AS user_email, rb.RoomType, rb.cin, rb.cout, rb.stat, rb.Name AS reservation_name, rb.Email AS reservation_email, rm.room_number
++                FROM guest_service_requests r
++                LEFT JOIN signup s ON s.UserID = r.user_id
++                LEFT JOIN roombook rb ON rb.id = r.roombook_id
++                LEFT JOIN room rm ON rm.id = rb.room_id";
++        $params = [];
++        $types = '';
++        if ($statusFilter && in_array($statusFilter, ['pendiente','en_proceso','completado','cancelado'], true)) {
++            $sql .= " WHERE r.status = ?";
++            $types .= 's';
++            $params[] = $statusFilter;
++        }
++        $sql .= " ORDER BY r.created_at DESC";
++
++        $stmt = $conn->prepare($sql);
++        if (!$stmt) {
++            return [];
++        }
++        if (!empty($params)) {
++            $stmt->bind_param($types, ...$params);
++        }
++        if (!$stmt->execute()) {
++            $stmt->close();
++            return [];
++        }
++        $result = $stmt->get_result();
++        $rows = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
++        $stmt->close();
++        return $rows;
++    }
++}
++
++if (!function_exists('guest_portal_confirmed_reservations')) {
++    function guest_portal_confirmed_reservations(mysqli $conn): array
++    {
++        $sql = "SELECT rb.id, rb.Name, rb.Email, rb.RoomType, rb.user_id, rb.cin, rb.cout, rb.stat, rb.room_id, rm.room_number
++                FROM roombook rb
++                LEFT JOIN room rm ON rm.id = rb.room_id
++                WHERE rb.stat IN ('Confirm','Ocupado','CheckIn')
++                ORDER BY rb.cin DESC, rb.id DESC";
++        $result = $conn->query($sql);
++        if (!$result) {
++            return [];
++        }
++        $rows = $result->fetch_all(MYSQLI_ASSOC);
++        $result->free();
++        return $rows;
++    }
++}
++
++if (!function_exists('guest_portal_update_request')) {
++    function guest_portal_update_request(mysqli $conn, int $requestId, string $status, ?string $note, ?string $handledBy, ?float $charge = null): bool
++    {
++        if (!in_array($status, ['pendiente','en_proceso','completado','cancelado'], true)) {
++            return false;
++        }
++        $resolvedAt = null;
++        if (in_array($status, ['completado','cancelado'], true)) {
++            $resolvedAt = date('Y-m-d H:i:s');
++        }
++
++        if ($charge === null) {
++            $sql = "UPDATE guest_service_requests SET status = ?, response_note = ?, handled_by = ?, resolved_at = ?, updated_at = NOW() WHERE id = ?";
++            $stmt = $conn->prepare($sql);
++            if (!$stmt) {
++                return false;
++            }
++            $stmt->bind_param('ssssi', $status, $note, $handledBy, $resolvedAt, $requestId);
++        } else {
++            $sql = "UPDATE guest_service_requests SET status = ?, response_note = ?, handled_by = ?, resolved_at = ?, charge_amount = ?, updated_at = NOW() WHERE id = ?";
++            $stmt = $conn->prepare($sql);
++            if (!$stmt) {
++                return false;
++            }
++            $stmt->bind_param('ssssdi', $status, $note, $handledBy, $resolvedAt, $charge, $requestId);
++        }
++
++        $ok = $stmt->execute();
++        $stmt->close();
++        return (bool)$ok;
++    }
++}
++
++if (!function_exists('guest_portal_record_notification')) {
++    function guest_portal_record_notification(mysqli $conn, string $audience, string $title, string $message, ?string $link = null, ?int $reservationId = null, ?int $requestId = null): void
++    {
++        if (!in_array($audience, ['admin','recepcion','staff'], true)) {
++            $audience = 'admin';
++        }
++        $sql = "INSERT INTO system_notifications (audience, title, message, link, related_reservation_id, related_request_id)
++                VALUES (?, ?, ?, ?, ?, ?)";
++        $stmt = $conn->prepare($sql);
++        if (!$stmt) {
++            return;
++        }
++        $stmt->bind_param('ssssii', $audience, $title, $message, $link, $reservationId, $requestId);
++        $stmt->execute();
++        $stmt->close();
++    }
++}
++
++if (!function_exists('guest_portal_notifications_for_audience')) {
++    function guest_portal_notifications_for_audience(mysqli $conn, string $audience, int $limit = 10, bool $onlyUnread = false): array
++    {
++        if (!in_array($audience, ['admin','recepcion','staff'], true)) {
++            $audience = 'admin';
++        }
++        $sql = "SELECT * FROM system_notifications WHERE audience = ?";
++        $params = [$audience];
++        $types = 's';
++        if ($onlyUnread) {
++            $sql .= " AND is_read = 0";
++        }
++        $sql .= " ORDER BY created_at DESC LIMIT ?";
++        $types .= 'i';
++        $params[] = $limit;
++
++        $stmt = $conn->prepare($sql);
++        if (!$stmt) {
++            return [];
++        }
++        $stmt->bind_param($types, ...$params);
++        if (!$stmt->execute()) {
++            $stmt->close();
++            return [];
++        }
++        $result = $stmt->get_result();
++        $notifications = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
++        $stmt->close();
++        return $notifications;
++    }
++}
++
++if (!function_exists('guest_portal_mark_notifications')) {
++    function guest_portal_mark_notifications(mysqli $conn, array $ids, bool $read = true): void
++    {
++        $ids = array_values(array_filter(array_map('intval', $ids)));
++        if (empty($ids)) {
++            return;
++        }
++        $placeholders = implode(',', array_fill(0, count($ids), '?'));
++        $sql = "UPDATE system_notifications SET is_read = ? WHERE id IN ($placeholders)";
++        $stmt = $conn->prepare($sql);
++        if (!$stmt) {
++            return;
++        }
++        $types = str_repeat('i', count($ids) + 1);
++        $params = array_merge([$read ? 1 : 0], $ids);
++        $stmt->bind_param($types, ...$params);
++        $stmt->execute();
++        $stmt->close();
++    }
++}
++
++if (!function_exists('guest_portal_format_status')) {
++    function guest_portal_format_status(string $status): string
++    {
++        return match ($status) {
++            'pendiente'   => 'Pendiente',
++            'en_proceso'  => 'En proceso',
++            'completado'  => 'Completado',
++            'cancelado'   => 'Cancelado',
++            default       => ucfirst(str_replace('_', ' ', $status)),
++        };
++    }
++}
++
++?>
+ 
+EOF
+)

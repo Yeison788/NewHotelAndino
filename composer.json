@@ -1,0 +1,7 @@
+{
+    "require": {
+        "twilio/sdk": "^8.3",
+        "lucianotonet/groq-php": "^0.0.10",
+        "dompdf/dompdf": "^3.1"
+    }
+}

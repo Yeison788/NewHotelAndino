@@ -1,0 +1,301 @@
+/* ===== Base ===== */
+body {
+    font-family: "Poppins", sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f9f9f9;
+    /* ⚠️ Importante: no centramos todo el body para no romper home.php */
+    /* display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; */
+}
+
+/* Enlaces del header del chat */
+.chat-header a{
+    text-decoration:none;
+    color: white;
+}
+
+.copyright{
+    font-size:12px;
+    text-align: center;
+}
+.copyright a {
+    text-decoration:none;
+    color: #343c41;
+}
+
+/* ===== FAB (nuevo) ===== */
+.chat-fab{
+    position: fixed;
+    right: calc(20px + env(safe-area-inset-right));
+    bottom: calc(20px + env(safe-area-inset-bottom));
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    border: 0;
+    background-color: #1087FF;
+    color: #fff;
+    display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    z-index: 1002; /* por encima del popup */
+    box-shadow: 0 10px 24px rgba(0,0,0,.18), 0 6px 12px rgba(0,0,0,.12);
+    transition: transform .15s ease, box-shadow .2s ease, background-color .2s ease;
+}
+.chat-fab:hover{ transform: translateY(-1px); box-shadow: 0 14px 30px rgba(0,0,0,.22), 0 8px 16px rgba(0,0,0,.14); }
+.chat-fab:active{ transform: translateY(0); }
+
+.chat-fab .icon-chat{ display:block; }
+.chat-fab .icon-close{ display:none; }
+.chat-fab[data-open="true"] .icon-chat{ display:none; }
+.chat-fab[data-open="true"] .icon-close{ display:block; }
+
+/* Pulso sutil cuando está cerrado */
+.chat-fab:not([data-open="true"])::after{
+    content:"";
+    position:absolute; inset:0;
+    border-radius:50%;
+    animation: fabPulse 2.2s ease-out infinite;
+    box-shadow: 0 0 0 0 rgba(16,135,255,.45);
+}
+@keyframes fabPulse{
+    0%{ box-shadow: 0 0 0 0 rgba(16,135,255,.45); }
+    70%{ box-shadow: 0 0 0 14px rgba(16,135,255,0); }
+    100%{ box-shadow: 0 0 0 0 rgba(16,135,255,0); }
+}
+
+/* ===== Botón antiguo (ya no se usa, puedes borrarlo del HTML) ===== */
+#chatbot-toggle-btn {
+    display:none; /* oculto para evitar duplicidad */
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 15px;
+    border: none;
+    background-color: #1087FF;
+    color: #fff;
+    border-radius: 30px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 1001;
+}
+#chatbot-toggle-btn:hover { background-color: #0074CC; }
+
+/* ===== Popup del chatbot ===== */
+.chatbot-popup {
+    display: none;
+    position: fixed;
+    /* Deja espacio al FAB a la derecha */
+    right: calc(92px + env(safe-area-inset-right));
+    bottom: calc(20px + env(safe-area-inset-bottom));
+    background-color: #fff;
+    border-radius: 15px;
+    box-shadow: 0 18px 48px rgba(0,0,0,.22), 0 10px 24px rgba(0,0,0,.12);
+    width: 350px;
+    max-width: 92vw;
+    max-height: 70vh;
+    z-index: 1001;
+    overflow: hidden;
+}
+
+.chat-header {
+    background-color: #1087FF;
+    color: #fff;
+    padding: 15px 20px;
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#close-btn {
+    background-color: transparent;
+    border: none;
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.chat-box {
+    max-height: 340px;
+    overflow-y: auto;
+    padding: 15px 20px;
+    background: #fafafa;
+    /* que las burbujas puedan alinearse a izq/der con márgenes */
+    display: block;
+}
+
+.chat-input {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    border-top: 1px solid #ddd;
+    background:#fff;
+}
+
+#user-input {
+    font-family: "Poppins";
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    outline: none;
+}
+
+#send-btn {
+    font-family: "Poppins", sans-serif;
+    padding: 10px 20px;
+    border: none;
+    background-color: #1087FF;
+    color: #fff;
+    border-radius: 12px;
+    margin-left: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+#send-btn:hover { background-color: #0074CC; }
+
+/* ===== Burbujas ===== */
+.user-message, .bot-message{
+    max-width: 80%;
+    padding: 12px 14px;
+    border-radius: 15px;
+    margin-top: 12px;
+    position: relative;
+    word-break: break-word;
+}
+
+/* Usuario: a la derecha, gris */
+.user-message {
+    background-color: #f3f3f3;
+    color: #333;
+    margin-left: auto;   /* empuja a la derecha */
+    margin-right: 10px;
+    border-top-right-radius: 4px;
+}
+/* Bot: a la izquierda, azul */
+.bot-message {
+    background-color: #1087FF;
+    color: #fff;
+    margin-right: auto;  /* empuja a la izquierda */
+    margin-left: 10px;
+    border-top-left-radius: 4px;
+}
+
+/* Avatares (emoji) */
+.user-message::before {
+    content: "\1F468";
+    position: absolute;
+    bottom: -17px;
+    right: -20px;
+    margin-bottom: 7px;
+    font-size: 20px;
+    background-color: #1087FF;
+    color: #fff;
+    border-radius: 50%;
+    width: 30px; height: 30px;
+    display: flex; justify-content: center; align-items: center;
+    box-shadow: 0 0 5px rgba(0,0,0,0.3);
+}
+.bot-message::before {
+    content: "\1F916";
+    position: absolute;
+    bottom: -17px;
+    left: -14px;
+    margin-bottom: 4px;
+    font-size: 20px;
+    background-color: #1087FF;
+    color: #fff;
+    border-radius: 50%;
+    width: 30px; height: 30px;
+    display: flex; justify-content: center; align-items: center;
+    box-shadow: 0 0 5px rgba(0,0,0,0.3);
+}
+
+/* Botones sugeridos dentro del mensaje del bot (si los usas) */
+.button-container {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 10px;
+}
+.button-container button {
+    padding: 10px 50px;
+    border: none;
+    background-color: #1087FF;
+    color: #fff;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+.button-container button:hover { background-color: #0074CC; }
+
+/* ===== Responsive ===== */
+@media (max-width: 600px){
+    .chatbot-popup{
+        right: calc(20px + env(safe-area-inset-right));
+        bottom: calc(20px + env(safe-area-inset-bottom));
+        width: 94vw;
+        max-height: 78vh;
+    }
+}
+/* ===== FAB con icono de robot ===== */
+.chat-fab .icon-robot { display:block; font-size: 20px; }
+.chat-fab .icon-close { display:none; font-size: 20px; }
+.chat-fab[data-open="true"] .icon-robot { display:none; }
+.chat-fab[data-open="true"] .icon-close { display:block; }
+
+/* ===== Cabecera moderna del chat ===== */
+.chat-header{
+  background: linear-gradient(135deg, #1087FF 0%, #7FC8FF 100%);
+  color: #fff;
+  padding: 12px 12px;
+  border-top-left-radius: 15px;
+  border-top-right-radius: 15px;
+  display:flex; align-items:center; justify-content:space-between;
+  backdrop-filter: saturate(1.2) blur(6px);
+}
+
+/* Identidad del bot con avatar */
+.bot-identity{ display:flex; align-items:center; gap:10px; }
+.bot-identity .avatar{
+  width: 34px; height: 34px; border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  display:grid; place-items:center;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.25);
+}
+.bot-identity .avatar i{ font-size: 18px; }
+.bot-identity .meta{ line-height: 1.05; }
+.bot-identity .meta strong{ display:block; font-size: 14px; font-weight: 700; }
+.bot-identity .meta small{
+  font-size: 11px; opacity: .9; position: relative; padding-left: 14px;
+}
+.bot-identity .meta small::before{
+  content:""; position:absolute; left:0; top:50%; transform: translateY(-50%);
+  width:8px; height:8px; border-radius:50%; background:#4ade80; /* verde online */
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.6);
+}
+
+/* Botón de cerrar moderno (chevron) */
+.icon-btn{
+  width: 36px; height: 36px; border-radius: 12px;
+  border: none; background: rgba(255,255,255,0.18); color:#fff;
+  display:grid; place-items:center; cursor:pointer;
+  transition: transform .15s ease, background .2s ease;
+}
+.icon-btn:hover{ transform: translateY(-1px); background: rgba(255,255,255,0.26); }
+.icon-btn i{ font-size: 18px; }
+
+/* ===== Popup: animación de entrada ===== */
+.chatbot-popup{
+  /* lo que ya tienes… */
+  opacity: 0; transform: translateY(10px) scale(0.98);
+  visibility: hidden; pointer-events: none;
+  transition: opacity .18s ease, transform .22s ease, visibility 0s linear .18s;
+}
+.chatbot-popup.open{
+  opacity:1; transform: translateY(0) scale(1);
+  visibility: visible; pointer-events: auto;
+  transition: opacity .18s ease, transform .22s ease;
+}

@@ -1,0 +1,178 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600&display=swap');
+
+/* ===== Vars & base ===== */
+:root{
+  --gold:#d4af37;
+  --gold-dark:#b8860b;
+  --gold-light:#e4c766;
+  --ink:#1f1f1f;
+
+  --panel-bg:#ffffff;
+  --panel-soft:#f9fbff;
+  --panel-soft-2:#eef2f7;
+  --panel-border:#e8eef8;
+}
+*{margin:0;padding:0;font-family:'Poppins',sans-serif;}
+
+/* ===== Scrollbars ===== */
+*::-webkit-scrollbar{ width:.45rem; }
+*::-webkit-scrollbar-track{ background:#2b2212; }
+*::-webkit-scrollbar-thumb{ background:var(--gold); }
+
+/* ===== Ajustes generales ===== */
+.reservations-wrapper .card{
+  border-radius: 16px;
+}
+
+#adduser{
+  box-shadow: 0 6px 14px rgba(0,0,0,.12);
+}
+
+/* ======================================================================
+   ===================   MODAL: Guest Detail Panel   =====================
+   ====================================================================== */
+
+#guestdetailpanel{
+  position:fixed; inset:0; z-index:10000;
+  display:none; /* se muestra con JS */
+  justify-content:center; align-items:center;
+  background:rgba(0,0,0,.55);
+}
+
+/* Form = grid (header / body / footer) */
+#guestdetailpanel .guestdetailpanelform{
+  display:grid; grid-template-rows:auto 1fr auto; gap:12px;
+  width:min(1170px,96vw); height:88vh;
+  background:var(--panel-bg);
+  border-radius:16px; overflow:hidden;
+  box-shadow:0 20px 50px rgba(0,0,0,.35);
+  animation:guestinfoform .28s ease;
+}
+@keyframes guestinfoform{ 0%{ transform:translateY(30px); opacity:.7 } }
+
+/* Header */
+.guestdetailpanelform .head{
+  height:60px; padding:0 16px;
+  display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(180deg,#fff,#faf7ea);
+  border-bottom:1px solid rgba(0,0,0,.06);
+  position:relative;
+}
+.guestdetailpanelform .head h3{
+  margin:0; color:var(--ink); letter-spacing:.5px;
+}
+.guestdetailpanelform .head i{
+  position:absolute; right:16px; top:50%; transform:translateY(-50%);
+  font-size:24px; cursor:pointer; color:#333;
+}
+
+/* Body: dos columnas + divisor + scroll interno */
+.guestdetailpanelform .middle{
+  overflow:auto; padding:18px; background:var(--panel-soft-2);
+  display:grid; grid-template-columns:1fr 1px 1fr; gap:18px;
+}
+#guestdetailpanel .line{ background:rgba(0,0,0,.08); border-radius:1px; }
+
+/* Tarjetas */
+.guestdetailpanelform .guestinfo,
+.guestdetailpanelform .reservationinfo{
+  background:var(--panel-soft);
+  border:1px solid var(--panel-border);
+  border-radius:12px; padding:16px;
+}
+.guestdetailpanelform .guestinfo h4,
+.guestdetailpanelform .reservationinfo h4{
+  margin:0 0 10px; color:var(--ink); display:flex; align-items:center; gap:10px;
+}
+.guestdetailpanelform .guestinfo h4 i,
+.guestdetailpanelform .reservationinfo h4 i{ color:var(--gold-dark); }
+
+/* Inputs */
+#guestdetailpanel input[type="text"],
+#guestdetailpanel input[type="email"],
+#guestdetailpanel input[type="date"],
+#guestdetailpanel .selectinput{
+  width:100%; height:44px; border-radius:12px;
+  border:1.5px solid #e8e8f0; background:#fff;
+  padding:10px 12px; margin:10px 0;
+  outline:none; transition:border-color .18s, box-shadow .18s;
+}
+#guestdetailpanel input:focus,
+#guestdetailpanel .selectinput:focus{
+  border-color:var(--gold);
+  box-shadow:0 0 0 .2rem rgba(212,175,55,.16);
+}
+
+/* Fechas lado a lado */
+#guestdetailpanel .datesection{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+#guestdetailpanel .datesection label{ font-size:12px; color:#333; margin-bottom:4px; }
+
+/* Footer centrado */
+.guestdetailpanelform .footer{
+  background:#fff; border-top:1px solid rgba(0,0,0,.06);
+  padding:10px 16px; display:flex; justify-content:center; gap:10px;
+}
+.guestdetailpanelform .footer a{ text-decoration:none !important; }
+
+/* Botón Enviar dorado (override Bootstrap) */
+#guestdetailpanel .footer .btn-success,
+#guestdetailpanel .footer .btn-success:focus,
+#guestdetailpanel .footer .btn-success:active{
+  min-width:180px; height:44px; border:none !important; border-radius:999px !important;
+  background:linear-gradient(180deg,var(--gold-light),var(--gold)) !important;
+  color:#fff !important; font-weight:800;
+  box-shadow:0 6px 14px rgba(0,0,0,.15) !important;
+}
+#guestdetailpanel .footer .btn-success:hover{
+  background:linear-gradient(180deg,var(--gold),var(--gold-dark)) !important;
+  transform:translateY(-1px);
+}
+
+/* Scrollbar del body del modal */
+#guestdetailpanel .middle::-webkit-scrollbar{ width:8px; }
+#guestdetailpanel .middle::-webkit-scrollbar-thumb{ background:#dcdfe6; border-radius:8px; }
+
+/* ===== Responsive ===== */
+@media (max-width:900px){
+  .guestdetailpanelform .middle{ grid-template-columns:1fr; padding:14px 12px; }
+  #guestdetailpanel .line{ display:none; }
+  #guestdetailpanel .datesection{ grid-template-columns:1fr; }
+}
+/* Título de tarjeta con “chip” dorado para el icono */
+.card-title{
+  display:flex; align-items:center; gap:10px;
+  margin:0 0 12px; color:#111;
+}
+.card-title i{
+  width:28px; height:28px; display:inline-flex; align-items:center; justify-content:center;
+  border-radius:999px; font-size:14px; color:#fff;
+  background: linear-gradient(180deg, var(--gold-light), var(--gold));
+  box-shadow: 0 4px 10px rgba(0,0,0,.12);
+}
+@media (max-width: 900px){
+  .guestdetailpanelform .footer{
+    position: sticky; bottom: 0; z-index: 3;
+    background: rgba(255,255,255,.85);
+    backdrop-filter: blur(6px);
+    padding: 12px 16px;
+  }
+  #guestdetailpanel .footer .btn-success{ width:100%; max-width:520px; }
+}
+/* requerido e inválido */
+#guestdetailpanel input:required:invalid,
+#guestdetailpanel .selectinput:required:invalid{
+  border-color:#e57373;
+}
+#guestdetailpanel input:required:invalid:focus,
+#guestdetailpanel .selectinput:required:invalid:focus{
+  box-shadow:0 0 0 .2rem rgba(229,115,115,.25);
+}
+.guestdetailpanelform .head i{
+  width:32px; height:32px; border-radius:999px;
+  display:flex; align-items:center; justify-content:center;
+  transition: transform .12s ease, background-color .2s ease;
+}
+.guestdetailpanelform .head i:hover{
+  background: rgba(0,0,0,.06);
+  transform: scale(1.06);
+}
