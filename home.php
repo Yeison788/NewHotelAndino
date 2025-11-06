@@ -165,8 +165,9 @@ unset($_SESSION['guest_request_flash']);
         width: 92vw;
         max-height: 70vh;
         background: #fff;
-        border-radius: 14px;
+        border-radius: 16px;
         box-shadow: 0 18px 48px rgba(0,0,0,.22), 0 10px 24px rgba(0,0,0,.12);
+        border: 1px solid rgba(212,175,55,.2);
         overflow: hidden;
         z-index: 9998;
       }
@@ -181,26 +182,85 @@ unset($_SESSION['guest_request_flash']);
         border:0; background:transparent; color:#fff; font-size:18px; line-height:1; cursor:pointer;
       }
       .chat-box{
-        height: 340px; overflow:auto; padding:12px;
-        background: #fafafa;
+        height: 340px;
+        overflow:auto;
+        padding:16px;
+        background: #faf8ef;
       }
       .chat-input{
-        display:flex; gap:8px; padding:10px; background:#fff; border-top:1px solid #eee;
+        display:flex;
+        align-items:center;
+        gap:12px;
+        padding:12px 16px;
+        background:#fff;
+        border-top:1px solid #e6e0cf;
       }
-      .chat-input input{ flex:1; border:1px solid #e5e5e5; border-radius:10px; padding:10px; outline:none;}
-      .chat-input button{ border:0; border-radius:10px; padding:10px 14px; background:var(--gold, #d4af37); color:#fff; cursor:pointer; }
+      .chat-input input{
+        flex:1;
+        border:1px solid #ded6bd;
+        border-radius:12px;
+        padding:12px;
+        outline:none;
+        font-size:14px;
+        background:#fdfbf5;
+        transition:border-color .2s ease, box-shadow .2s ease;
+      }
+      .chat-input input:focus{
+        border-color: var(--gold, #d4af37);
+        box-shadow: 0 0 0 2px rgba(212,175,55,.18);
+        background:#fff;
+      }
+      .chat-input button{
+        border:0;
+        border-radius:12px;
+        padding:10px 18px;
+        background:var(--gold, #d4af37);
+        color:#fff;
+        cursor:pointer;
+        transition:background .2s ease, transform .2s ease;
+      }
+      .chat-input button:hover{
+        background:#c79b1f;
+        transform: translateY(-1px);
+      }
 
       .user-message, .bot-message{
-        max-width: 80%;
-        margin: 6px 0; padding: 10px 12px; border-radius: 12px;
-        word-break: break-word; line-height: 1.25;
+        max-width: 82%;
+        margin: 8px 0;
+        padding: 11px 14px;
+        border-radius: 14px;
+        word-break: break-word;
+        line-height: 1.35;
       }
       .user-message{
         margin-left: auto; background:#efefef; color:#1f1f1f; border-top-right-radius: 4px;
       }
       .bot-message{
-        margin-right: auto; background:#ffeebe; color:#1f1f1f; border-top-left-radius: 4px;
+        margin-right: auto;
+        background:#ffe0a3;
+        color:#1f1f1f;
+        border-top-left-radius: 4px;
+        box-shadow: inset 0 0 0 1px rgba(212,175,55,.25);
       }
+
+      .chat-options{
+        display:flex;
+        flex-wrap:wrap;
+        gap:8px;
+        margin:8px 0 0;
+      }
+      .chat-options--disabled{ opacity:.55; }
+      .chat-option-btn{
+        background:#fff7e0;
+        border:1px solid rgba(212,175,55,.55);
+        border-radius:999px;
+        padding:6px 12px;
+        font-size:12px;
+        cursor:pointer;
+        transition:background .2s ease, border-color .2s ease, transform .2s ease;
+      }
+      .chat-option-btn:hover{ background:#fbe3a3; border-color:var(--gold,#d4af37); transform:translateY(-1px); }
+      .chat-options--disabled .chat-option-btn{ cursor:default; }
 
       @media (max-width: 600px){
         .chatbot-popup{
@@ -263,16 +323,7 @@ unset($_SESSION['guest_request_flash']);
     <div class="carousel-inner">
         <div class="carousel-item active">
             <img class="carousel-image" src="./image/hotel1.jpg" alt="Hotel 1">
-        </div>
-        <div class="carousel-item">
-            <img class="carousel-image" src="./image/hotel2.jpg" alt="Hotel 2">
-        </div>
-        <div class="carousel-item">
-            <img class="carousel-image" src="./image/hotel3.jpg" alt="Hotel 3">
-        </div>
-        <div class="carousel-item">
-            <img class="carousel-image" src="./image/hotel4.jpg" alt="Hotel 4">
-        </div>
+        </div>       
 
         <div class="welcomeline">
           <h1 class="welcometag">Bienvenido al cielo en la tierra</h1>
@@ -790,7 +841,7 @@ unset($_SESSION['guest_request_flash']);
 
     // Mensaje de bienvenida si abre por primera vez
     if (shouldOpen && document.getElementById('chat-box').children.length === 0) {
-      appendMessage('bot', "👋 Hola, soy el asistente virtual del Hotel Andino. ¿En qué puedo ayudarte hoy?");
+      appendMessage('bot', "👋 Hola, soy el asistente virtual del Hotel Andino. Puedo darte información del hotel y ayudarte a gestionar reservas. ¿En qué puedo apoyarte?");
     }
 
     // Persistir estado
